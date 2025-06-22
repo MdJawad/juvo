@@ -5,23 +5,29 @@ import genAI, { defaultGenerationConfig, GEMINI_MODEL } from '@/lib/gemini';
 
 export const runtime = 'edge';
 
+// Helper function to convert roles
+function convertRole(role: 'user' | 'assistant' | 'system'): 'user' | 'model' {
+  if (role === 'assistant') return 'model';
+  return 'user'; // both 'user' and 'system' messages are treated as user input
+}
+
 export async function POST(req: NextRequest) {
   try {
     const { messages, currentStep }: { messages: Message[]; currentStep?: InterviewStep } = await req.json();
 
     // Convert messages to Gemini format
     const formattedMessages = messages.map(msg => ({
-      role: msg.role === 'assistant' ? 'model' : msg.role,
+      role: convertRole(msg.role),
       parts: [{ text: msg.content }]
     }));
 
     // Add system prompts
     const systemPrompts = [
-      { role: 'user', parts: [{ text: AI_SYSTEM_PROMPT }] },
+      { role: 'user' as const, parts: [{ text: AI_SYSTEM_PROMPT }] },
     ];
     if (currentStep) {
       systemPrompts.push({
-        role: 'user',
+        role: 'user' as const,
         parts: [{ text: `CONTEXT: You are currently in the "${currentStep}" phase of the interview. Focus your questions on this topic.` }]
       });
     }
@@ -73,7 +79,7 @@ export async function POST(req: NextRequest) {
         // Map common Gemini error codes to user-friendly messages
         switch (status) {
           case 400:
-            message = 'Invalid request. Please check your input and try again.';
+            message = 'Invalid request format. Please try again.';
             break;
           case 429:
             message = 'Rate limit exceeded. Please try again later.';
