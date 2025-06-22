@@ -9,6 +9,7 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@google/generative-ai": "^0.24.1",
     "ai": "^4.3.16",
     "clsx": "^2.1.1",
     "deepmerge-ts": "^7.1.5",
