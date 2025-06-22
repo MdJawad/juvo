@@ -1,14 +1,22 @@
 'use client';
 
-import { useState } from 'react';
 import { ProgressTracker } from '@/app/components/ProgressTracker';
 import { InterviewPanel } from '@/app/components/InterviewPanel';
 import { ResumePreview } from '@/app/components/ResumePreview';
-import { InterviewStep } from '@/lib/types';
+import { useInterview } from '@/app/hooks/useInterview';
 import { Bot } from 'lucide-react';
 
 export default function Home() {
-  const [currentStep, setCurrentStep] = useState<InterviewStep>('profile');
+  const {
+    messages,
+    input,
+    handleInputChange,
+    handleSubmit,
+    isLoading,
+    resumeData,
+    currentStep,
+    progress,
+  } = useInterview();
 
   return (
     <main className="min-h-screen bg-gray-100 p-4 lg:p-8">
@@ -30,12 +38,19 @@ export default function Home() {
 
           {/* Center Column: Chat and Forms */}
           <div className="lg:col-span-8 xl:col-span-5">
-            <InterviewPanel />
+            <InterviewPanel
+              messages={messages}
+              input={input}
+              handleInputChange={handleInputChange}
+              handleSubmit={handleSubmit}
+              isLoading={isLoading}
+              resumeData={resumeData}
+            />
           </div>
 
           {/* Right Column: Resume Preview */}
           <div className="hidden xl:block xl:col-span-4">
-            <ResumePreview />
+            <ResumePreview resumeData={resumeData} />
           </div>
         </div>
       </div>
