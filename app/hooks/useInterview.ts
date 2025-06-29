@@ -31,8 +31,17 @@ export function useInterview() {
   const [resumeData, setResumeData] = useState<Partial<ResumeData>>(initialState.resumeData);
   const [currentStep, setCurrentStep] = useState<InterviewStep>(initialState.currentStep);
   const [progress, setProgress] = useState<number>(initialState.progress);
+  const [isUploading, setIsUploading] = useState(false);
 
-  const { messages, input, handleInputChange, handleSubmit, isLoading, setMessages, append } = useChat({
+  const {
+    messages,
+    input,
+    handleInputChange,
+    handleSubmit,
+    isLoading: isChatLoading,
+    setMessages,
+    append,
+  } = useChat({
     api: '/api/chat',
   });
 
@@ -41,11 +50,8 @@ export function useInterview() {
     if (currentStepIndex < INTERVIEW_FLOW.length - 1) {
       const nextStep = INTERVIEW_FLOW[currentStepIndex + 1] as InterviewStep;
       setCurrentStep(nextStep);
-      // Calculate progress based on step index
-      const progressPerStep = 90 / (INTERVIEW_FLOW.length - 1); // Reserve last 10% for review
+      const progressPerStep = 90 / (INTERVIEW_FLOW.length - 1);
       setProgress(Math.min(10 + (currentStepIndex + 1) * progressPerStep, 100));
-      
-      // Notify the AI about the transition
       append({
         id: uuidv4(),
         role: 'system',
@@ -57,30 +63,17 @@ export function useInterview() {
   const parseAndMergeData = (content: string) => {
     const dataRegex = /<arete-data>(.*?)<\/arete-data>/s;
     const match = content.match(dataRegex);
-
     if (match && match[1]) {
       try {
         const parsedData = JSON.parse(match[1]) as AreteDataResponse;
-        
-        // Handle step completion signal
         if (parsedData.stepComplete && parsedData.stepComplete === currentStep) {
-          // Remove the stepComplete field before merging
           const { stepComplete, ...resumeUpdates } = parsedData;
-          // Merge any other data updates
           if (Object.keys(resumeUpdates).length > 0) {
-            setResumeData(prevData => {
-              const merged = deepmerge(prevData, resumeUpdates) as Partial<ResumeData>;
-              return merged;
-            });
+            setResumeData(prevData => deepmerge(prevData, resumeUpdates) as Partial<ResumeData>);
           }
-          // Move to the next step
           moveToNextStep();
         } else {
-          // Just merge the data updates
-          setResumeData(prevData => {
-            const merged = deepmerge(prevData, parsedData) as Partial<ResumeData>;
-            return merged;
-          });
+          setResumeData(prevData => deepmerge(prevData, parsedData) as Partial<ResumeData>);
         }
       } catch (error) {
         console.error("Failed to parse <arete-data> JSON:", error);
@@ -89,51 +82,32 @@ export function useInterview() {
   };
 
   useEffect(() => {
-    if (messages.length === 0 && !isLoading) {
+    if (messages.length === 0 && !isChatLoading) {
       setMessages([{
         id: uuidv4(),
         role: 'assistant',
         content: "Hello! I'm Arete, your AI career counselor. To start, could you please tell me your full name?",
       }]);
     }
-  }, [messages.length, isLoading, setMessages]);
+  }, [messages.length, isChatLoading, setMessages]);
 
   const customHandleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-
-    // Skip submission if input is empty
     if (!input.trim()) return;
-
-    // Optimistically add the user's message to the UI
     const userMessage: Message = { id: uuidv4(), role: 'user', content: input };
     append(userMessage);
-    
-    // Clear the input field after submission
     handleInputChange({ target: { value: '' } } as React.ChangeEvent<HTMLInputElement>);
-
     try {
       const response = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          messages: [...messages, userMessage],
-          currentStep: currentStep,
-        }),
+        body: JSON.stringify({ messages: [...messages, userMessage], currentStep }),
       });
-
-      if (!response.ok) {
-        throw new Error(`API error: ${response.statusText}`);
-      }
-
+      if (!response.ok) throw new Error(`API error: ${response.statusText}`);
       const data = await response.json();
-
-      // Add the assistant's response to the UI
       const assistantMessage: Message = { id: uuidv4(), role: 'assistant', content: data.content };
       append(assistantMessage);
-
-      // Process the data from the response
       parseAndMergeData(data.content);
-
     } catch (error) {
       console.error("Failed to fetch chat response:", error);
       append({
@@ -144,19 +118,58 @@ export function useInterview() {
     }
   };
 
+  const handleResumeUpload = useCallback(async (file: File) => {
+    setIsUploading(true);
+    const formData = new FormData();
+    formData.append('file', file);
+
+    try {
+      const response = await fetch('/api/parse-resume', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to parse resume.');
+      }
+
+      const parsedData = await response.json();
+
+      // Merge the parsed data into the existing resume data
+      setResumeData(prevData => deepmerge(prevData, parsedData) as Partial<ResumeData>);
+
+      // Trigger a system message to start the verification conversation
+      append({
+        id: uuidv4(),
+        role: 'system',
+        content: "I've parsed your resume. Let's review the information I've extracted to ensure it's correct.",
+      });
+
+    } catch (error) {
+      console.error('Failed to upload and parse resume:', error);
+      // Optionally, display an error to the user via an alert or toast notification
+      alert(error instanceof Error ? error.message : 'An unknown error occurred.');
+    } finally {
+      setIsUploading(false);
+    }
+  }, [append]);
+
   const filteredMessages = messages.map(m => ({
     ...m,
     content: m.content.replace(/<arete-data>.*?<\/arete-data>/s, '').trim()
-  })).filter(m => m.content.length > 0);
+  })).filter(m => m.content.length > 0 && m.role !== 'system');
 
   return {
     messages: filteredMessages,
     input,
     handleInputChange,
     handleSubmit: customHandleSubmit,
-    isLoading,
+    isLoading: isChatLoading || isUploading,
+    isUploading,
     resumeData,
     currentStep,
     progress,
+    handleResumeUpload,
   };
 } 

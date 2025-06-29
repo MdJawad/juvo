@@ -5,6 +5,7 @@ import { InterviewPanel } from '@/app/components/InterviewPanel';
 import { ResumePreview } from '@/app/components/ResumePreview';
 import { useInterview } from '@/app/hooks/useInterview';
 import { Bot } from 'lucide-react';
+import { ResumeUploader } from './components/ResumeUploader';
 
 export default function Home() {
   const {
@@ -13,9 +14,11 @@ export default function Home() {
     handleInputChange,
     handleSubmit,
     isLoading,
+    isUploading,
     resumeData,
     currentStep,
     progress,
+    handleResumeUpload,
   } = useInterview();
 
   return (
@@ -34,6 +37,10 @@ export default function Home() {
           {/* Left Column: Progress & Interview */}
           <div className="lg:col-span-4 xl:col-span-3 flex flex-col gap-8">
             <ProgressTracker currentStep={currentStep} />
+            <div className="flex flex-col items-center gap-4 pt-4 border-t border-gray-200">
+              <p className="text-sm text-gray-600 font-medium">Or get started faster</p>
+              <ResumeUploader onFileUpload={handleResumeUpload} isLoading={isUploading} />
+            </div>
           </div>
 
           {/* Center Column: Chat and Forms */}
