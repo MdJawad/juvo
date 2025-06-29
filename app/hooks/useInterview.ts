@@ -134,17 +134,23 @@ export function useInterview() {
         throw new Error(errorData.error || 'Failed to parse resume.');
       }
 
-      const parsedData = await response.json();
+      const result = await response.json();
+      const extractedText = result.rawText;
 
-      // Merge the parsed data into the existing resume data
-      setResumeData(prevData => deepmerge(prevData, parsedData) as Partial<ResumeData>);
+      if (!extractedText) {
+        throw new Error('The parsed document appears to be empty.');
+      }
 
-      // Trigger a system message to start the verification conversation
+      // For now, display the extracted text in the chat for verification.
+      // The next step will be to send this text to an AI for structuring.
       append({
         id: uuidv4(),
-        role: 'system',
-        content: "I've parsed your resume. Let's review the information I've extracted to ensure it's correct.",
+        role: 'assistant', // Using 'assistant' role to make it visible
+        content: `I've successfully extracted the text from your resume. Here it is:\n\n---\n\n${extractedText}`,
       });
+
+      // The next step will be to pass this `extractedText` to the AI.
+      // We are not updating the resumeData state directly anymore.
 
     } catch (error) {
       console.error('Failed to upload and parse resume:', error);
