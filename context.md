@@ -39,3 +39,87 @@ The following are the next two major features planned for development.
     -   Suggest specific skills from the user's skill list to emphasize.
     -   Potentially draft a new professional summary tailored to the role.
 -   **Presenting Diffs:** Show the suggested changes to the user in a clear, "diff-like" view, allowing them to accept or reject each modification. This maintains user control over the final document.
+
+---
+
+### Implementation Plan: PDF Resume Parsing
+
+This section outlines the step-by-step plan to implement the PDF resume parsing and ingestion feature.
+
+**Underlying Technology:**
+*   **Document Parsing:** A suitable document parsing library (e.g., `pdf-parse` on npm for server-side processing) will be used to extract raw text from the uploaded PDF.
+*   **AI Data Mapping:** The Gemini model will be used via a dedicated API endpoint to convert the raw text into the structured `ResumeData` schema.
+
+---
+
+#### **Phase 1: Frontend - File Upload Component**
+
+1.  **Create UI Component:**
+    *   Build a new React component, `ResumeUploader.tsx`, in `app/components/`.
+    *   This component will feature a drag-and-drop area and a traditional file selection button.
+    *   It will accept only `.pdf` files.
+    *   Display loading states (e.g., a spinner) while the file is being processed.
+    *   Handle and display any potential upload errors to the user.
+
+2.  **Integrate into Home Page:**
+    *   Add the `ResumeUploader` component to `app/page.tsx`.
+    *   It should be presented as an alternative starting point to the conversational interview (e.g., "Or, upload your resume to get started").
+
+---
+
+#### **Phase 2: Backend - File Handling API**
+
+1.  **Create New API Route:**
+    *   Create a new API route handler at `app/api/parse-resume/route.ts`.
+    *   This endpoint will be responsible for receiving the uploaded PDF file.
+
+2.  **Handle `multipart/form-data`:**
+    *   The endpoint must be configured to accept `multipart/form-data`, which is standard for file uploads.
+    *   It will read the file from the request body and temporarily store it for processing.
+
+---
+
+#### **Phase 3: Core Logic - Parsing and AI-Powered Structuring**
+
+1.  **Integrate Parsing Library:**
+    *   In the `parse-resume` API route, use the chosen document parsing library to read the PDF file buffer.
+    *   Extract the raw, unstructured text content from the PDF.
+
+2.  **Develop AI Structuring Prompt:**
+    *   Engineer a new, dedicated system prompt for the Gemini model.
+    *   This prompt will instruct the AI to act as a data extraction expert.
+    *   The prompt will include:
+        *   The raw text extracted from the resume.
+        *   The target JSON schema (the `ResumeData` type definition from `lib/types.ts`).
+        *   Instructions to map the unstructured text to the corresponding fields in the schema and to return *only* the valid JSON object.
+
+3.  **Call AI Service:**
+    *   The API route will send the raw text and the new prompt to the Gemini API.
+    *   It will await the response, which should be the structured resume data in JSON format.
+    *   Include robust error handling and validation to ensure the returned data conforms to the `ResumeData` schema.
+
+---
+
+#### **Phase 4: State Management & Frontend Update**
+
+1.  **Update `useInterview` Hook:**
+    *   Create a new function within the `useInterview` hook, e.g., `handleResumeUpload(file: File)`.
+    *   This function will call the `/api/parse-resume` endpoint with the uploaded file.
+    *   On a successful response, it will take the structured JSON data and update the `resumeData` state.
+
+2.  **Connect UI to Hook:**
+    *   The `ResumeUploader` component will call `handleResumeUpload` when a file is selected.
+    *   Once the `resumeData` state is updated, the `ResumePreview` and other components will automatically re-render to show the parsed information.
+
+---
+
+#### **Phase 5: User Verification**
+
+1.  **Transition the UI:**
+    *   After the resume data is successfully parsed and populated, the UI should transition.
+    *   The `ResumeUploader` can be hidden, and the focus should shift to the `ResumePreview` and `InterviewPanel`.
+
+2.  **Conversational Confirmation:**
+    *   Trigger a new system message in the `InterviewPanel`.
+    *   The AI will initiate a conversation to verify the extracted data, e.g., "I've extracted the information from your resume. Let's quickly review it. I see your most recent role was at 'Company X'. Is that correct?"
+    *   This leverages the existing conversational UI to allow the user to confirm or correct the parsed information, creating a seamless user experience.
