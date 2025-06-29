@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useChat, Message } from 'ai/react';
 import { v4 as uuidv4 } from 'uuid';
 import {
@@ -8,9 +8,54 @@ import {
   ConversationState,
   InterviewStep,
   AreteDataResponse,
+  UserProfile,
+  WorkExperience,
+  Education,
+  Skills,
 } from '@/lib/types';
 import { INTERVIEW_FLOW } from '@/lib/constants';
 import { deepmerge } from 'deepmerge-ts';
+
+// Helper functions to determine if a resume section is considered complete
+const isProfileComplete = (profile?: Partial<UserProfile>): boolean => {
+  if (!profile) return false;
+  // Consider profile complete if it has name and at least 2 other fields
+  const requiredFields = ['fullName', 'email', 'phone', 'linkedin', 'github', 'portfolio', 'careerSummary'];
+  const completedFields = requiredFields.filter(field => {
+    const value = profile[field as keyof UserProfile];
+    return value !== undefined && value !== null && value !== '';
+  });
+  return Boolean(profile.fullName) && completedFields.length >= 3;
+};
+
+const isExperienceComplete = (experience?: Partial<WorkExperience>[]): boolean => {
+  if (!experience || experience.length === 0) return false;
+  // Consider experience complete if it has at least one job with company, position, dates
+  return experience.some(job => {
+    const hasAchievements = job.achievements && 
+                          Array.isArray(job.achievements) && 
+                          job.achievements.length > 0;
+    return Boolean(job.company) && Boolean(job.position) && Boolean(job.startDate) && hasAchievements;
+  });
+};
+
+const isEducationComplete = (education?: Partial<Education>[]): boolean => {
+  if (!education || education.length === 0) return false;
+  // Consider education complete if it has at least one entry with institution, degree, dates
+  return education.some(edu => (
+    Boolean(edu.institution) && Boolean(edu.degree) && Boolean(edu.fieldOfStudy) && Boolean(edu.startDate)
+  ));
+};
+
+const isSkillsComplete = (skills?: Partial<Skills>): boolean => {
+  if (!skills) return false;
+  // Consider skills complete if it has at least 3 technical skills
+  return (
+    skills.technical && 
+    Array.isArray(skills.technical) && 
+    skills.technical.length >= 3
+  );
+};
 
 // Initial state for the interview can now be a partial object
 const initialResumeData: Partial<ResumeData> = {
@@ -27,11 +72,40 @@ const initialState: Omit<ConversationState, 'resumeData'> & { resumeData: Partia
   resumeData: initialResumeData,
 };
 
+// Interface to track which sections were populated from a resume upload
+interface PopulatedSections {
+  profile: boolean;
+  experience: boolean;
+  education: boolean;
+  skills: boolean;
+  [key: string]: boolean; // Allow indexing with string for other steps like 'review' and 'done'
+}
+
 export function useInterview() {
   const [resumeData, setResumeData] = useState<Partial<ResumeData>>(initialState.resumeData);
   const [currentStep, setCurrentStep] = useState<InterviewStep>(initialState.currentStep);
   const [progress, setProgress] = useState<number>(initialState.progress);
   const [isUploading, setIsUploading] = useState(false);
+  
+  // New state to track which sections were populated from resume upload
+  const [populatedFromResume, setPopulatedFromResume] = useState<PopulatedSections>({
+    profile: false,
+    experience: false,
+    education: false,
+    skills: false,
+    review: false,
+    done: false
+  });
+  
+  // Calculate which sections are complete based on current resume data
+  const completeSections = useMemo(() => ({
+    profile: isProfileComplete(resumeData.profile),
+    experience: isExperienceComplete(resumeData.experience),
+    education: isEducationComplete(resumeData.education),
+    skills: isSkillsComplete(resumeData.skills),
+    review: false, // Review section is never skipped
+    done: false    // Done state is never skipped
+  }), [resumeData]);
 
   const {
     messages,
@@ -45,20 +119,68 @@ export function useInterview() {
     api: '/api/chat',
   });
 
+  // Helper function to find next incomplete section that needs attention
+  const findNextIncompleteStep = useCallback((startStep: InterviewStep): InterviewStep => {
+    const startIndex = INTERVIEW_FLOW.indexOf(startStep);
+    if (startIndex === -1 || startIndex >= INTERVIEW_FLOW.length - 1) {
+      return 'review'; // Default to review if we're at the end or can't find the step
+    }
+    
+    // Start from the next step after the current one
+    for (let i = startIndex + 1; i < INTERVIEW_FLOW.length; i++) {
+      const step = INTERVIEW_FLOW[i] as InterviewStep;
+      // Always proceed to review step, or if the section is not complete yet
+      if (step === 'review' || step === 'done' || !completeSections[step]) {
+        return step;
+      }
+    }
+    
+    return 'review'; // Default to review if all sections are complete
+  }, [completeSections]);
+
+  // Updated moveToNextStep function to skip completed sections
   const moveToNextStep = useCallback(() => {
     const currentStepIndex = INTERVIEW_FLOW.indexOf(currentStep);
     if (currentStepIndex < INTERVIEW_FLOW.length - 1) {
-      const nextStep = INTERVIEW_FLOW[currentStepIndex + 1] as InterviewStep;
+      // Find the next step that needs attention (incomplete)
+      const nextStep = findNextIncompleteStep(currentStep);
+      const nextStepIndex = INTERVIEW_FLOW.indexOf(nextStep);
+      
       setCurrentStep(nextStep);
+      
+      // Update progress based on how many steps we've moved through
       const progressPerStep = 90 / (INTERVIEW_FLOW.length - 1);
-      setProgress(Math.min(10 + (currentStepIndex + 1) * progressPerStep, 100));
-      append({
-        id: uuidv4(),
-        role: 'system',
-        content: `Moving to the ${nextStep} section.`,
-      });
+      const progressValue = Math.min(10 + nextStepIndex * progressPerStep, 100);
+      setProgress(progressValue);
+      
+      // Customize message based on whether we're skipping sections
+      if (nextStepIndex > currentStepIndex + 1) {
+        // We're skipping one or more sections
+        const skippedSections = INTERVIEW_FLOW.slice(currentStepIndex + 1, nextStepIndex)
+          .filter(step => step !== 'review' && step !== 'done');
+        
+        if (skippedSections.length > 0) {
+          append({
+            id: uuidv4(),
+            role: 'system',
+            content: `Skipping ${skippedSections.join(', ')} sections since they are already complete from your resume. Moving to the ${nextStep} section.`,
+          });
+        } else {
+          append({
+            id: uuidv4(),
+            role: 'system',
+            content: `Moving to the ${nextStep} section.`,
+          });
+        }
+      } else {
+        append({
+          id: uuidv4(),
+          role: 'system',
+          content: `Moving to the ${nextStep} section.`,
+        });
+      }
     }
-  }, [currentStep, append]);
+  }, [currentStep, append, completeSections, findNextIncompleteStep]);
 
   const parseAndMergeData = (content: string) => {
     const dataRegex = /<arete-data>(.*?)<\/arete-data>/s;
@@ -141,20 +263,70 @@ export function useInterview() {
         // Update the resume data with the structured information
         setResumeData(prevData => deepmerge(prevData, result.structuredData) as Partial<ResumeData>);
         
+        // Determine which sections are now complete based on the structured data
+        const newlyPopulatedSections = {
+          profile: isProfileComplete(result.structuredData.profile),
+          experience: isExperienceComplete(result.structuredData.experience),
+          education: isEducationComplete(result.structuredData.education),
+          skills: isSkillsComplete(result.structuredData.skills),
+          review: false,
+          done: false
+        };
+        
+        // Update our tracking of which sections came from the resume
+        setPopulatedFromResume(newlyPopulatedSections);
+        
+        // Create messages about what was extracted
+        const populatedSectionNames = Object.entries(newlyPopulatedSections)
+          .filter(([key, value]) => value && key !== 'review' && key !== 'done')
+          .map(([key]) => key);
+        
+        const missingSectionNames = Object.entries(newlyPopulatedSections)
+          .filter(([key, value]) => !value && key !== 'review' && key !== 'done')
+          .map(([key]) => key);
+        
+        // Generate a personalized message based on what was extracted
+        let responseMessage = `I've successfully parsed your resume and extracted your information.`;
+        
+        if (populatedSectionNames.length > 0) {
+          responseMessage += ` The following sections were populated: ${populatedSectionNames.join(', ')}.`;
+        }
+        
+        if (missingSectionNames.length > 0) {
+          responseMessage += ` We'll need to complete the following sections: ${missingSectionNames.join(', ')}.`;
+        }
+        
+        responseMessage += ` Please review the details in the preview panel.`;
+        
         // Notify the user about the successful parsing
         append({
           id: uuidv4(),
           role: 'assistant',
-          content: `I've parsed your resume and extracted your information. Please review the details in the preview panel and let me know if anything needs to be corrected.`,
+          content: responseMessage,
         });
 
-        // Optionally add specific questions about the parsed data
+        // If the current step is already populated from the resume, move to the next incomplete step
         setTimeout(() => {
-          append({
-            id: uuidv4(),
-            role: 'assistant',
-            content: `Is there anything you'd like me to update or add to your resume?`,
-          });
+          if (currentStep !== 'review' && newlyPopulatedSections[currentStep]) {
+            // Find the next incomplete section
+            const nextIncompleteStep = findNextIncompleteStep(currentStep);
+            
+            append({
+              id: uuidv4(),
+              role: 'assistant',
+              content: `I see that your ${currentStep} section is already complete from your resume. Let's focus on the ${nextIncompleteStep} section instead.`,
+            });
+            
+            // Update the current step
+            setCurrentStep(nextIncompleteStep);
+          } else {
+            // Ask about the current section or general improvements
+            append({
+              id: uuidv4(),
+              role: 'assistant',
+              content: `Would you like to make any changes to the information extracted from your resume?`,
+            });
+          }
         }, 1000);
       } else {
         // If structured data is not available, show the raw text
