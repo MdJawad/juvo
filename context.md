@@ -123,3 +123,100 @@ This section outlines the step-by-step plan to implement the PDF resume parsing 
     *   Trigger a new system message in the `InterviewPanel`.
     *   The AI will initiate a conversation to verify the extracted data, e.g., "I've extracted the information from your resume. Let's quickly review it. I see your most recent role was at 'Company X'. Is that correct?"
     *   This leverages the existing conversational UI to allow the user to confirm or correct the parsed information, creating a seamless user experience.
+
+---
+
+### UX Improvement Plan: Enhanced Resume Upload Experience
+
+After initial implementation and testing of the PDF parsing feature, several usability issues have been identified. The following plan outlines improvements to create a more streamlined and efficient resume upload experience.
+
+#### **Problem Assessment:**
+
+*   **Redundant Confirmation:** After uploading a resume, users are still required to go through each section sequentially in conversation mode.
+*   **Incomplete Data Extraction:** Skills and other sections are not being fully captured from uploaded resumes.
+*   **Inefficient Verification:** Users cannot easily see which information was successfully extracted vs. what needs attention.
+*   **Limited Visual Feedback:** The resume preview doesn't clearly indicate which sections were successfully populated.
+
+---
+
+#### **Phase 1: Immediate Visual Feedback**
+
+1.  **Enhanced Resume Preview:**
+    *   Add visual indicators next to section headings (green checkmarks for complete sections, yellow warning icons for potential issues).
+    *   Include a completion percentage at the top of the preview to give users a quick assessment of extraction quality.
+    *   Highlight missing or incomplete fields to draw user attention to areas that need input.
+
+2.  **Real-time Data Population:**
+    *   Improve the transition from upload to preview by making it instantaneous and visually engaging.
+    *   Consider adding a brief animation to show the resume being "scanned" before displaying the populated preview.
+
+---
+
+#### **Phase 2: Single-Screen Verification Interface**
+
+1.  **Create a "Resume Review" Mode:**
+    *   Develop a new component `ResumeReviewPanel.tsx` in `app/components/`.
+    *   This panel appears immediately after successful resume parsing.
+    *   Design a UI that displays all extracted information in an editable form format.
+
+2.  **Quick Edit Functionality:**
+    *   Allow users to make immediate corrections to any extracted field.
+    *   Implement inline editing for efficient updates.
+    *   Include a "Confirm All" button to approve the entire resume at once.
+    *   Provide an option to "Edit in Conversation" for users who prefer the guided approach.
+
+---
+
+#### **Phase 3: Intelligent Conversation Adaptation**
+
+1.  **Update the Conversation Flow:**
+    *   Modify `useInterview.ts` to detect which sections are fully populated from the resume.
+    *   Add logic to skip standard interview questions for complete sections.
+    *   Implement a more natural conversational flow that acknowledges the uploaded data.
+    *   Use messages like: "I've extracted your experience at CloudScale Analytics. Would you like to add any achievements that weren't in your resume?"
+
+2.  **Context-Aware AI Prompting:**
+    *   Update the AI system prompt to be aware of which information came from an uploaded resume.
+    *   Engineer the prompt to focus questions only on missing or ambiguous information.
+    *   Include instructions for the AI to acknowledge the source of information ("I see from your resume that...").
+
+---
+
+#### **Phase 4: Enhanced Skills Extraction**
+
+1.  **Improve Skills Identification:**
+    *   Enhance the `RESUME_PARSER_PROMPT` in `lib/constants.ts` to better identify skills throughout the resume.
+    *   Look beyond dedicated "Skills" sections to find skills mentioned in work experience and other sections.
+    *   Implement natural language processing techniques to identify action verbs and technical terms.
+
+2.  **Skills Categorization:**
+    *   Add logic to automatically categorize extracted skills as technical vs. soft skills.
+    *   Create a mapping of common industry skills to aid in categorization.
+    *   Implement confidence scores for skills extraction to prioritize verification questions.
+
+---
+
+#### **Phase 5: Resume Enhancement Guidance**
+
+1.  **Resume Analysis:**
+    *   After extraction, analyze the resume for common improvement opportunities.
+    *   Check for metrics, quantifiable achievements, and action verbs.
+    *   Compare against best practices for the user's industry or role.
+
+2.  **Improvement Suggestions:**
+    *   Develop a component to display targeted improvement suggestions.
+    *   Offer specific enhancements (e.g., "Consider adding metrics to your CloudScale achievements").
+    *   Provide options for the AI to help expand bullet points with more compelling language.
+    *   Identify potential keyword gaps based on modern job requirements in the user's field.
+
+---
+
+#### **Implementation Priority:**
+
+These improvements should be implemented in the following order:
+
+1.  **Phase 3:** Intelligent Conversation Adaptation (highest impact with moderate effort)
+2.  **Phase 1:** Immediate Visual Feedback (high impact with relatively low effort)
+3.  **Phase 4:** Enhanced Skills Extraction (high impact but requires AI prompt engineering)
+4.  **Phase 2:** Single-Screen Verification Interface (high impact but requires new UI components)
+5.  **Phase 5:** Resume Enhancement Guidance (nice-to-have feature for later iterations)
