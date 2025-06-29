@@ -86,8 +86,19 @@ export async function POST(req: NextRequest) {
     // 5. Use AI to structure the cleaned text into resume data
     console.log('Sending cleaned text to AI for structuring...');
     
+    // Check if API key is available
+    const apiKey = process.env.GOOGLE_API_KEY;
+    if (!apiKey) {
+      console.error('GOOGLE_API_KEY environment variable is not set');
+      // Since the API key is missing, return the cleaned text without structured data
+      return NextResponse.json({
+        error: 'Google API key is not configured. Unable to structure resume data.',
+        rawText: cleanedText.trim(),
+      });
+    }
+    
     // Initialize the Google Generative AI client
-    const genAI = new GoogleGenerativeAI(process.env.GOOGLE_API_KEY || '');
+    const genAI = new GoogleGenerativeAI(apiKey);
     
     // Get the Gemini Pro model
     const model = genAI.getGenerativeModel({
@@ -96,6 +107,7 @@ export async function POST(req: NextRequest) {
     
     try {
       // Generate structured data from the cleaned text
+      console.log('Sending request to Gemini API...');
       const result = await model.generateContent([
         RESUME_PARSER_PROMPT,
         `Here is the resume text to parse:\n\n${cleanedText.trim()}`,
@@ -103,6 +115,7 @@ export async function POST(req: NextRequest) {
       
       const response = await result.response;
       const text = response.text();
+      console.log('Received response from Gemini API');
       
       // Parse the AI's response as JSON
       try {
@@ -110,30 +123,61 @@ export async function POST(req: NextRequest) {
         const jsonMatch = text.match(/```(?:json)?\s*([\s\S]+?)\s*```/) || 
                          text.match(/{[\s\S]+}/);  // Fallback to finding anything that looks like JSON
         
-        const jsonStr = jsonMatch ? jsonMatch[1] || jsonMatch[0] : text;
-        const parsedData = JSON.parse(jsonStr) as Partial<ResumeData>;
+        if (!jsonMatch) {
+          console.error('Could not identify JSON in the AI response');
+          console.log('AI response content:', text.substring(0, 500) + '...');
+          return NextResponse.json({
+            error: 'Could not extract structured data from AI response',
+            errorDetails: 'The AI response did not contain valid JSON',
+            rawText: cleanedText.trim(),
+            aiResponsePreview: text.substring(0, 200) + '...' // Include a preview of the AI response for debugging
+          });
+        }
         
-        // Return both the structured data and the raw text
-        return NextResponse.json({
-          structuredData: parsedData,
-          rawText: cleanedText.trim(),
-        });
+        const jsonStr = jsonMatch[1] || jsonMatch[0];
+        console.log('Extracted JSON from AI response');
+        
+        try {
+          const parsedData = JSON.parse(jsonStr) as Partial<ResumeData>;
+          
+          // Basic validation of the parsed data structure
+          if (!parsedData || typeof parsedData !== 'object') {
+            throw new Error('Parsed data is not a valid object');
+          }
+          
+          // Return both the structured data and the raw text
+          return NextResponse.json({
+            structuredData: parsedData,
+            rawText: cleanedText.trim(),
+          });
+        } catch (parseError) {
+          console.error('JSON.parse error:', parseError);
+          console.log('Attempted to parse this string as JSON:', jsonStr.substring(0, 500));
+          
+          return NextResponse.json({
+            error: 'Invalid JSON structure in AI response',
+            errorDetails: parseError instanceof Error ? parseError.message : 'Unknown parsing error',
+            rawText: cleanedText.trim(),
+          });
+        }
       } catch (jsonError) {
-        console.error('Failed to parse AI response as JSON:', jsonError);
-        console.log('AI raw response:', text);
+        console.error('Failed to extract or parse JSON from AI response:', jsonError);
+        console.log('AI raw response:', text.substring(0, 300));
         
         // If parsing fails, return just the cleaned text
         return NextResponse.json({
           error: 'Failed to structure resume data',
+          errorDetails: jsonError instanceof Error ? jsonError.message : 'Error extracting JSON from AI response',
           rawText: cleanedText.trim(),
         });
       }
     } catch (aiError) {
       console.error('AI processing error:', aiError);
       
-      // If AI processing fails, return just the cleaned text
+      // Return detailed error information for debugging
       return NextResponse.json({
         error: 'AI processing failed',
+        errorDetails: aiError instanceof Error ? aiError.message : 'Unknown AI processing error',
         rawText: cleanedText.trim(),
       });
     }

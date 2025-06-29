@@ -329,22 +329,45 @@ export function useInterview() {
           }
         }, 1000);
       } else {
-        // If structured data is not available, show the raw text
+        // If structured data is not available, show the raw text and error details
         const extractedText = result.rawText;
         
         if (!extractedText) {
           throw new Error('The parsed document appears to be empty.');
         }
-
-        append({
-          id: uuidv4(),
-          role: 'assistant',
-          content: `I've extracted the text from your resume, but I wasn't able to fully structure it. Here's what I found:\n\n---\n\n${extractedText}\n\n---\n\nPlease tell me what information you'd like to include in your resume.`,
-        });
-
-        // Also log any error message from the API
-        if (result.error) {
-          console.error('Resume parsing error:', result.error);
+        
+        // Get detailed error information if available
+        const errorMessage = result.error || 'Unknown error';
+        const errorDetails = result.errorDetails || '';
+        
+        // Log error details for debugging
+        console.error('Resume parsing error:', errorMessage);
+        if (errorDetails) {
+          console.error('Error details:', errorDetails);
+        }
+        
+        // Handle different error types with appropriate user messages
+        if (errorMessage.includes('API key')) {
+          // API key configuration issue
+          append({
+            id: uuidv4(),
+            role: 'assistant',
+            content: `I've extracted the text from your resume, but I wasn't able to analyze it automatically due to an API configuration issue. The raw text has been extracted and you can continue manually.\n\n---\n\n${extractedText.substring(0, 1000)}${extractedText.length > 1000 ? '...' : ''}\n\n---\n\nLet's proceed with building your resume. What would you like to focus on first?`,
+          });
+        } else if (errorMessage.includes('JSON') || errorMessage.includes('structure')) {
+          // JSON parsing issue
+          append({
+            id: uuidv4(),
+            role: 'assistant',
+            content: `I've extracted the text from your resume, but there was an issue processing the structure automatically. Don't worry, we can continue with the information I've extracted.\n\n---\n\n${extractedText.substring(0, 1000)}${extractedText.length > 1000 ? '...' : ''}\n\n---\n\nLet me help you build a well-structured resume. Can you confirm if the information above looks correct?`,
+          });
+        } else {
+          // Generic error
+          append({
+            id: uuidv4(),
+            role: 'assistant',
+            content: `I've extracted the text from your resume, but I wasn't able to fully structure it automatically. Here's what I found:\n\n---\n\n${extractedText.substring(0, 1000)}${extractedText.length > 1000 ? '...' : ''}\n\n---\n\nLet's work together to build your resume. What aspects of your experience would you like to highlight?`,
+          });
         }
       }
 
