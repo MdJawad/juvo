@@ -73,9 +73,15 @@ export async function POST(req: NextRequest) {
       throw new Error('No text content found in the parsed document.');
     }
 
-    // 4. Return the raw extracted text to the frontend for verification.
-    // The next step will be to send this text to an AI for structuring.
-    return NextResponse.json({ rawText: extractedText });
+    // 4. Clean up the extracted text to remove artifacts like base64 image data.
+    const cleanedText = extractedText
+      // This regex removes markdown image tags like ![...](data:image/...)
+      .replace(/!\[.*?\]\(data:image\/[a-zA-Z]+;base64,[\w+/=\s]+\)/g, '')
+      // This removes any remaining standalone ![Image] tags
+      .replace(/!\[Image\]/g, '');
+
+    // 5. Return the cleaned text to the frontend for verification.
+    return NextResponse.json({ rawText: cleanedText.trim() });
 
   } catch (error) {
     console.error('[PARSE_RESUME_API_ERROR]', error);
