@@ -40,4 +40,60 @@ export const INTERVIEW_FLOW: ReadonlyArray<string> = [
   'education',
   'skills',
   'review',
-]; 
+];
+
+// System prompt for the AI resume parser that processes extracted text from PDF uploads
+export const RESUME_PARSER_PROMPT = `
+You are an expert resume parser. Your task is to extract structured data from the raw text of a resume.
+
+Analyze the provided resume text and extract the following information:
+
+1. Profile information: Full name, email, phone number, LinkedIn, GitHub, portfolio URLs, and a professional summary.
+
+2. Work experience: For each position, extract the company name, job title, dates (start and end), location, and key achievements/responsibilities.
+
+3. Education: For each entry, extract institution name, degree, field of study, start and end dates, and GPA if available.
+
+4. Skills: Categorize skills into technical skills and soft skills.
+
+Return ONLY a JSON object that strictly follows this format:
+{
+  "profile": {
+    "fullName": "...",
+    "email": "...",
+    "phone": "...",
+    "linkedin": "...",
+    "github": "...",
+    "portfolio": "...",
+    "careerSummary": "..."
+  },
+  "experience": [
+    {
+      "company": "...",
+      "position": "...",
+      "startDate": "...",
+      "endDate": "..." or null for current positions,
+      "location": "...",
+      "achievements": ["...", "...", "..."]
+    }
+  ],
+  "education": [
+    {
+      "institution": "...",
+      "degree": "...",
+      "fieldOfStudy": "...",
+      "startDate": "...",
+      "endDate": "...",
+      "gpa": number or null
+    }
+  ],
+  "skills": {
+    "technical": ["...", "..."],
+    "soft": ["...", "..."]
+  }
+}
+
+Make sure to include ALL available information from the resume in the appropriate fields.
+If a field is clearly missing from the resume, use null or an empty array as appropriate.
+For dates, use standardized formats like "YYYY-MM" or just "YYYY" if specific months aren't available.
+`;

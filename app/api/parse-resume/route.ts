@@ -1,4 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { GoogleGenerativeAI } from '@google/generative-ai';
+import { RESUME_PARSER_PROMPT } from '@/lib/constants';
+import { ResumeData } from '@/lib/types';
 
 export async function POST(req: NextRequest) {
   try {
@@ -80,8 +83,60 @@ export async function POST(req: NextRequest) {
       // This removes any remaining standalone ![Image] tags
       .replace(/!\[Image\]/g, '');
 
-    // 5. Return the cleaned text to the frontend for verification.
-    return NextResponse.json({ rawText: cleanedText.trim() });
+    // 5. Use AI to structure the cleaned text into resume data
+    console.log('Sending cleaned text to AI for structuring...');
+    
+    // Initialize the Google Generative AI client
+    const genAI = new GoogleGenerativeAI(process.env.GOOGLE_API_KEY || '');
+    
+    // Get the Gemini Pro model
+    const model = genAI.getGenerativeModel({
+      model: 'gemini-pro',
+    });
+    
+    try {
+      // Generate structured data from the cleaned text
+      const result = await model.generateContent([
+        RESUME_PARSER_PROMPT,
+        `Here is the resume text to parse:\n\n${cleanedText.trim()}`,
+      ]);
+      
+      const response = await result.response;
+      const text = response.text();
+      
+      // Parse the AI's response as JSON
+      try {
+        // The AI might return markdown code blocks, so we need to extract just the JSON
+        const jsonMatch = text.match(/```(?:json)?\s*([\s\S]+?)\s*```/) || 
+                         text.match(/{[\s\S]+}/);  // Fallback to finding anything that looks like JSON
+        
+        const jsonStr = jsonMatch ? jsonMatch[1] || jsonMatch[0] : text;
+        const parsedData = JSON.parse(jsonStr) as Partial<ResumeData>;
+        
+        // Return both the structured data and the raw text
+        return NextResponse.json({
+          structuredData: parsedData,
+          rawText: cleanedText.trim(),
+        });
+      } catch (jsonError) {
+        console.error('Failed to parse AI response as JSON:', jsonError);
+        console.log('AI raw response:', text);
+        
+        // If parsing fails, return just the cleaned text
+        return NextResponse.json({
+          error: 'Failed to structure resume data',
+          rawText: cleanedText.trim(),
+        });
+      }
+    } catch (aiError) {
+      console.error('AI processing error:', aiError);
+      
+      // If AI processing fails, return just the cleaned text
+      return NextResponse.json({
+        error: 'AI processing failed',
+        rawText: cleanedText.trim(),
+      });
+    }
 
   } catch (error) {
     console.error('[PARSE_RESUME_API_ERROR]', error);

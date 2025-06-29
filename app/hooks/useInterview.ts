@@ -135,22 +135,46 @@ export function useInterview() {
       }
 
       const result = await response.json();
-      const extractedText = result.rawText;
 
-      if (!extractedText) {
-        throw new Error('The parsed document appears to be empty.');
+      // Check if we have structured data from the API
+      if (result.structuredData) {
+        // Update the resume data with the structured information
+        setResumeData(prevData => deepmerge(prevData, result.structuredData) as Partial<ResumeData>);
+        
+        // Notify the user about the successful parsing
+        append({
+          id: uuidv4(),
+          role: 'assistant',
+          content: `I've parsed your resume and extracted your information. Please review the details in the preview panel and let me know if anything needs to be corrected.`,
+        });
+
+        // Optionally add specific questions about the parsed data
+        setTimeout(() => {
+          append({
+            id: uuidv4(),
+            role: 'assistant',
+            content: `Is there anything you'd like me to update or add to your resume?`,
+          });
+        }, 1000);
+      } else {
+        // If structured data is not available, show the raw text
+        const extractedText = result.rawText;
+        
+        if (!extractedText) {
+          throw new Error('The parsed document appears to be empty.');
+        }
+
+        append({
+          id: uuidv4(),
+          role: 'assistant',
+          content: `I've extracted the text from your resume, but I wasn't able to fully structure it. Here's what I found:\n\n---\n\n${extractedText}\n\n---\n\nPlease tell me what information you'd like to include in your resume.`,
+        });
+
+        // Also log any error message from the API
+        if (result.error) {
+          console.error('Resume parsing error:', result.error);
+        }
       }
-
-      // For now, display the extracted text in the chat for verification.
-      // The next step will be to send this text to an AI for structuring.
-      append({
-        id: uuidv4(),
-        role: 'assistant', // Using 'assistant' role to make it visible
-        content: `I've successfully extracted the text from your resume. Here it is:\n\n---\n\n${extractedText}`,
-      });
-
-      // The next step will be to pass this `extractedText` to the AI.
-      // We are not updating the resumeData state directly anymore.
 
     } catch (error) {
       console.error('Failed to upload and parse resume:', error);
