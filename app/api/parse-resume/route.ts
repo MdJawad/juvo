@@ -39,17 +39,41 @@ export async function POST(req: NextRequest) {
     }
 
     const doclingResult = await doclingResponse.json();
+    console.log('Docling response:', JSON.stringify(doclingResult, null, 2));
 
     // 3. Extract the text content from the Docling response.
-    // The response is an array of processed sources. We take the first document from the first source.
-    const extractedText = doclingResult?.[0]?.documents?.[0]?.content;
-
-    if (typeof extractedText !== 'string') {
-      console.error('Could not extract text from Docling response:', JSON.stringify(doclingResult, null, 2));
-      throw new Error('Failed to extract text from the parsed document. The format might have changed.');
+    // According to the documentation, the response format is:
+    // {
+    //   "document": {
+    //     "md_content": "",
+    //     "json_content": {},
+    //     "html_content": "",
+    //     "text_content": "",
+    //     "doctags_content": ""
+    //   },
+    //   "status": "<success|partial_success|skipped|failure>",
+    //   "processing_time": 0.0,
+    //   "timings": {},
+    //   "errors": []
+    // }
+    
+    // First check if the status is success
+    if (doclingResult.status !== 'success' && doclingResult.status !== 'partial_success') {
+      console.error('Docling processing failed:', doclingResult.errors);
+      throw new Error(`Docling processing failed: ${doclingResult.errors?.join(', ') || 'Unknown error'}`);
     }
 
-    // 4. For now, return the raw extracted text to the frontend for verification.
+    // Try to extract text content from various formats, preferring text_content
+    const extractedText = doclingResult.document?.text_content || 
+                          doclingResult.document?.md_content || 
+                          doclingResult.document?.html_content;
+
+    if (!extractedText) {
+      console.error('Could not extract text from Docling response:', JSON.stringify(doclingResult, null, 2));
+      throw new Error('No text content found in the parsed document.');
+    }
+
+    // 4. Return the raw extracted text to the frontend for verification.
     // The next step will be to send this text to an AI for structuring.
     return NextResponse.json({ rawText: extractedText });
 
