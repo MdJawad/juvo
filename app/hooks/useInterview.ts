@@ -101,9 +101,15 @@ export function useInterview() {
   const customHandleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
+    // Skip submission if input is empty
+    if (!input.trim()) return;
+
     // Optimistically add the user's message to the UI
     const userMessage: Message = { id: uuidv4(), role: 'user', content: input };
     append(userMessage);
+    
+    // Clear the input field after submission
+    handleInputChange({ target: { value: '' } } as React.ChangeEvent<HTMLInputElement>);
 
     try {
       const response = await fetch('/api/chat', {
