@@ -12,6 +12,15 @@ The application is a Next.js project that uses a conversational AI to guide user
 - **Core Logic:** The `useInterview` hook (`app/hooks/useInterview.ts`) manages the conversational state, user input, and data extraction.
 - **AI Prompting:** The primary system prompt is located in `lib/constants.ts` (`AI_SYSTEM_PROMPT`).
 
+### Architecture Goal: Multi-Backend AI Support
+
+To ensure flexibility, avoid vendor lock-in, and manage API rate limits, the application will be refactored to support multiple AI backends. The system will be designed to easily switch between different providers based on environment configuration.
+
+**Supported Backends:**
+
+- **Google Gemini:** The default cloud-based provider.
+- **OpenAI-Compatible:** Any backend that adheres to the OpenAI API spec, such as a locally running Ollama instance.
+
 ## Product Development Roadmap
 
 The application's development is guided by a clear, phased approach. The immediate goal is to establish a solid foundation with two core user workflows, which will then be extended to achieve the long-term vision of AI-powered resume tailoring.
@@ -76,5 +85,6 @@ Once the core workflow is in place, development will focus on refining the user 
 
 #### **Implementation Priority:**
 
-1.  **Phase 1:** Establish the Core Workflow (Top Priority)
-2.  **Phase 2:** Refine and Enhance (Subsequent releases)
+1. **Phase 1:** Establish the Core Workflow (Top Priority)
+2. **Phase 2:** Refine and Enhance (Subsequent releases)
+3. **Phase 3:** Implement Multi-Backend AI Support
