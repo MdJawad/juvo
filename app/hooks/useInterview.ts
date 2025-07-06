@@ -12,6 +12,7 @@ import {
   WorkExperience,
   Education,
   Skills,
+  ChangeProposal,
 } from '@/lib/types';
 import { INTERVIEW_FLOW } from '@/lib/constants';
 import { deepmerge } from 'deepmerge-ts';
@@ -90,7 +91,8 @@ export function useInterview() {
   const [viewMode, setViewMode] = useState<'chat' | 'hub'>('chat');
   const [isTailorModalOpen, setIsTailorModalOpen] = useState(false);
   const [isTailoring, setIsTailoring] = useState(false);
-  
+  const [proposedChange, setProposedChange] = useState<ChangeProposal | null>(null);
+
   // New state to track which sections were populated from resume upload
   const [populatedFromResume, setPopulatedFromResume] = useState<PopulatedSections>({
     profile: false,
@@ -191,15 +193,26 @@ export function useInterview() {
     const match = content.match(dataRegex);
     if (match && match[1]) {
       try {
-        const parsedData = JSON.parse(match[1]) as AreteDataResponse;
-        if (parsedData.stepComplete && parsedData.stepComplete === currentStep) {
-          const { stepComplete, ...resumeUpdates } = parsedData;
-          if (Object.keys(resumeUpdates).length > 0) {
-            setResumeData(prevData => deepmerge(prevData, resumeUpdates) as Partial<ResumeData>);
-          }
+        const areteData = JSON.parse(match[1]) as AreteDataResponse;
+
+        // Handle change proposals first, as they take priority
+        if (areteData.changeProposal) {
+          setProposedChange(areteData.changeProposal);
+          // Stop further processing. The user needs to accept/reject the change.
+          return;
+        }
+
+        // Separate control flags from actual resume data
+        const { stepComplete, ...resumeUpdates } = areteData;
+
+        // Always merge any incoming resume data
+        if (Object.keys(resumeUpdates).length > 0) {
+          setResumeData(prevData => deepmerge(prevData, resumeUpdates) as Partial<ResumeData>);
+        }
+
+        // If the step is complete, advance the interview flow
+        if (stepComplete && stepComplete === currentStep) {
           moveToNextStep();
-        } else {
-          setResumeData(prevData => deepmerge(prevData, parsedData) as Partial<ResumeData>);
         }
       } catch (error) {
         console.error("Failed to parse <arete-data> JSON:", error);
@@ -335,6 +348,42 @@ export function useInterview() {
     }
   }, [append]);
 
+  const acceptChange = useCallback(() => {
+    if (!proposedChange) return;
+
+    setResumeData(currentData => {
+      // Deep clone to avoid direct mutation
+      const newData = JSON.parse(JSON.stringify(currentData));
+      
+      // Use a helper to set the value at the specified path
+      const set = (obj: any, path: string, value: any) => {
+        // Correctly parse paths like "experience[0].achievements[1]"
+        const keys = path.replace(/\\[(\d+)\\]/g, '.$1').replace(/\\[/g, '.').replace(/\\]/g, '').split('.');
+        let current = obj;
+        for (let i = 0; i < keys.length - 1; i++) {
+          if (current === null || typeof current === 'undefined') return; // Path does not exist
+          current = current[keys[i]];
+        }
+        if (current === null || typeof current === 'undefined') return; // Path does not exist
+        current[keys[keys.length - 1]] = value;
+      };
+
+      try {
+        set(newData, proposedChange.path, proposedChange.newValue);
+        return newData;
+      } catch (e) {
+        console.error("Failed to apply change:", e);
+        return currentData; // Return original data if path is invalid
+      }
+    });
+
+    setProposedChange(null); // Clear the proposal
+  }, [proposedChange]);
+
+  const rejectChange = useCallback(() => {
+    setProposedChange(null); // Just clear the proposal
+  }, []);
+
   const openTailorModal = () => setIsTailorModalOpen(true);
   const closeTailorModal = () => setIsTailorModalOpen(false);
 
@@ -430,5 +479,8 @@ export function useInterview() {
     openTailorModal,
     closeTailorModal,
     handleTailorResume,
+    proposedChange,
+    acceptChange,
+    rejectChange,
   };
 } 

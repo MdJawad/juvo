@@ -1,9 +1,10 @@
 import { Phone, Mail, Linkedin, Github, Globe, GraduationCap, Briefcase, Award } from 'lucide-react';
-import { ResumeData, UserProfile, WorkExperience, Education, Skills } from '@/lib/types';
+import { ResumeData, UserProfile, WorkExperience, Education, Skills, ChangeProposal } from '@/lib/types';
 import { clsx } from 'clsx';
 
 interface ResumePreviewProps {
   resumeData: Partial<ResumeData>;
+  proposedChange: ChangeProposal | null;
 }
 
 // Helper component for section headers
@@ -21,7 +22,7 @@ function SectionHeader({ title }: { title: string }) {
   );
 }
 
-export function ResumePreview({ resumeData }: ResumePreviewProps) {
+export function ResumePreview({ resumeData, proposedChange }: ResumePreviewProps) {
   const { 
     profile = {} as Partial<UserProfile>,
     experience = [] as Partial<WorkExperience>[],
@@ -34,7 +35,7 @@ export function ResumePreview({ resumeData }: ResumePreviewProps) {
       <div className="p-8 text-sm text-gray-800 font-sans">
         {/* Header */}
         <div className="text-center border-b pb-4 mb-6">
-          <h1 className="text-4xl font-bold text-gray-900">{profile.fullName || 'Your Name'}</h1>
+                    <h1 className={clsx("text-4xl font-bold text-gray-900", proposedChange?.path === 'profile.fullName' && 'bg-yellow-200 rounded p-1')}>{profile.fullName || 'Your Name'}</h1>
           <div className="flex justify-center items-center space-x-4 mt-2 text-xs text-gray-600">
             {profile.email && <span className="flex items-center"><Mail className="mr-1.5 h-3 w-3" />{profile.email}</span>}
             {profile.phone && <span className="flex items-center"><Phone className="mr-1.5 h-3 w-3" />{profile.phone}</span>}
@@ -62,7 +63,7 @@ export function ResumePreview({ resumeData }: ResumePreviewProps) {
         {profile.careerSummary && (
           <div className="mb-6">
             <SectionHeader title="Summary" />
-            <p className="mt-2 text-sm leading-relaxed">{profile.careerSummary}</p>
+                        <p className={clsx("mt-2 text-sm leading-relaxed", proposedChange?.path === 'profile.careerSummary' && 'bg-yellow-200 rounded p-1')}>{profile.careerSummary}</p>
           </div>
         )}
 
@@ -73,19 +74,26 @@ export function ResumePreview({ resumeData }: ResumePreviewProps) {
             {experience.map((job, idx) => (
               <div key={job.id || idx} className={clsx("mt-3", idx !== experience.length - 1 && "mb-4")}>
                 <div className="flex justify-between items-baseline">
-                  <h3 className="font-semibold text-md">{job.position}</h3>
+                                    <h3 className={clsx("font-semibold text-md", proposedChange?.path === `experience[${idx}].position` && 'bg-yellow-200 rounded p-1')}>{job.position}</h3>
                   <p className="text-xs font-medium text-gray-600">
                     {job.startDate} - {job.endDate || 'Present'}
                   </p>
                 </div>
-                <h4 className="font-medium text-sm text-blue-700">
+                <h4 className={clsx("font-medium text-sm text-blue-700", proposedChange?.path === `experience[${idx}].company` && 'bg-yellow-200 rounded p-1')}>
                   {job.company}
                   {job.location && <span className="text-gray-600"> • {job.location}</span>}
                 </h4>
                 {job.achievements && job.achievements.length > 0 && (
                   <ul className="list-disc list-outside ml-5 mt-1 space-y-1 text-sm">
                     {job.achievements.map((achievement, index) => (
-                      <li key={index} className="text-gray-700">{achievement}</li>
+                                            <li 
+                        key={index} 
+                        className={clsx(
+                          "text-gray-700",
+                          proposedChange?.path === `experience[${idx}].achievements[${index}]` && 'bg-yellow-200 rounded p-1'
+                        )}>
+                          {achievement}
+                      </li>
                     ))}
                   </ul>
                 )}
@@ -101,12 +109,12 @@ export function ResumePreview({ resumeData }: ResumePreviewProps) {
             {education.map((edu, idx) => (
               <div key={edu.id || idx} className={clsx("mt-3", idx !== education.length - 1 && "mb-4")}>
                 <div className="flex justify-between items-baseline">
-                  <h3 className="font-semibold text-md">{edu.degree}</h3>
+                                    <h3 className={clsx("font-semibold text-md", proposedChange?.path === `education[${idx}].degree` && 'bg-yellow-200 rounded p-1')}>{edu.degree}</h3>
                   <p className="text-xs font-medium text-gray-600">
                     {edu.startDate} - {edu.endDate}
                   </p>
                 </div>
-                <h4 className="font-medium text-sm text-blue-700">
+                <h4 className={clsx("font-medium text-sm text-blue-700", proposedChange?.path === `education[${idx}].institution` && 'bg-yellow-200 rounded p-1')}>
                   {edu.institution}
                   {edu.fieldOfStudy && <span className="text-gray-600"> • {edu.fieldOfStudy}</span>}
                 </h4>
@@ -126,9 +134,12 @@ export function ResumePreview({ resumeData }: ResumePreviewProps) {
                   <h3 className="font-semibold text-sm mb-2">Technical Skills</h3>
                   <div className="flex flex-wrap gap-2">
                     {skills.technical.map((skill, index) => (
-                      <span
+                                            <span
                         key={index}
-                        className="px-2 py-1 bg-blue-50 text-blue-700 rounded-full text-xs font-medium"
+                        className={clsx(
+                          "px-2 py-1 bg-blue-50 text-blue-700 rounded-full text-xs font-medium",
+                          proposedChange?.path === `skills.technical[${index}]` && 'ring-2 ring-yellow-400'
+                        )}
                       >
                         {skill}
                       </span>

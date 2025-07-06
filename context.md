@@ -12,7 +12,9 @@ The application is a Next.js project that uses a conversational AI to guide user
 - **Core Logic:** The `useInterview` hook (`app/hooks/useInterview.ts`) manages the conversational state, user input, and data extraction.
 - **AI Prompting:** The primary system prompt is located in `lib/constants.ts` (`AI_SYSTEM_PROMPT`).
 
-### Implemented: Multi-Backend AI Support
+### Implemented Features
+
+#### Multi-Backend AI Support
 
 To ensure flexibility, avoid vendor lock-in, and manage API rate limits, the application has been refactored to support multiple AI backends. The system is designed to easily switch between different providers based on environment configuration.
 
@@ -20,6 +22,23 @@ To ensure flexibility, avoid vendor lock-in, and manage API rate limits, the app
 
 - **Google Gemini:** The default cloud-based provider.
 - **OpenAI-Compatible:** Any backend that adheres to the OpenAI API spec, such as a locally running Ollama instance.
+
+#### Resume Change Highlighting
+
+To improve the user experience during the resume refinement process, the application now features a dynamic change highlighting system that allows users to clearly see and approve/reject AI-suggested changes to their resume.
+
+**Key Components:**
+
+- **AI Structured Data:** The AI returns a `changeProposal` object with the path to the field being changed, the old value, new value, and a description of why the change is beneficial.
+- **Visual Highlighting:** The specific section of the resume being modified is highlighted with a yellow background to draw the user's attention.
+- **User Control:** Users are presented with "Accept" and "Reject" buttons for each proposed change, giving them full control over their resume content.
+- **Two-Column Layout:** The interview panel has been redesigned to show the chat and resume preview side-by-side, creating a more integrated experience.
+
+**Implementation Details:**
+- The system prompt in `lib/constants.ts` instructs the AI on how to format change proposals.
+- The `useInterview` hook in `app/hooks/useInterview.ts` manages the state of proposed changes.
+- The `ResumePreview` component highlights the relevant sections based on the current proposal.
+- The `ChangeProposalCard` component displays the proposal details and action buttons.
 
 ## Product Development Roadmap
 

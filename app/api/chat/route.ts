@@ -28,12 +28,8 @@ export async function POST(req: NextRequest) {
     ].filter(Boolean).join('\n\n');
 
 
-    const aiResponse = await generateText(fullPrompt);
-
-    return NextResponse.json({
-      content: aiResponse,
-      role: 'assistant'
-    });
+    const stream = await generateText(fullPrompt);
+    return stream;
 
   } catch (error) {
     console.error('[CHAT_API_ERROR]', error);

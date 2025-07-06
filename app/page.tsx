@@ -28,12 +28,15 @@ export default function Home() {
     openTailorModal,
     closeTailorModal,
     handleTailorResume,
+    proposedChange,
+    acceptChange,
+    rejectChange,
   } = useInterview();
 
   // The main interview UI for the 'chat' view
   const chatUI = (
     <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 h-[calc(100vh-150px)]">
-      {/* Left Column: Progress & Interview */}
+      {/* Left Column: Progress & other controls */}
       <div className="lg:col-span-4 xl:col-span-3 flex flex-col gap-8">
         <ProgressTracker currentStep={currentStep} />
         <div className="flex flex-col items-center gap-4 pt-4 border-t border-gray-200">
@@ -42,8 +45,8 @@ export default function Home() {
         </div>
       </div>
 
-      {/* Center Column: Chat and Forms */}
-      <div className="lg:col-span-8 xl:col-span-5">
+      {/* Right Column: Combined Interview and Preview Panel */}
+      <div className="lg:col-span-8 xl:col-span-9">
         <InterviewPanel
           messages={messages}
           input={input}
@@ -51,12 +54,10 @@ export default function Home() {
           handleSubmit={handleSubmit}
           isLoading={isLoading}
           resumeData={resumeData}
+          proposedChange={proposedChange}
+          acceptChange={acceptChange}
+          rejectChange={rejectChange}
         />
-      </div>
-
-      {/* Right Column: Resume Preview */}
-      <div className="hidden xl:block xl:col-span-4">
-        <ResumePreview resumeData={resumeData} />
       </div>
     </div>
   );
@@ -83,7 +84,7 @@ export default function Home() {
 
       {/* Right Column: Resume Preview */}
       <div className="lg:col-span-8 xl:col-span-9">
-        <ResumePreview resumeData={resumeData} />
+        <ResumePreview resumeData={resumeData} proposedChange={null} />
       </div>
     </div>
   );

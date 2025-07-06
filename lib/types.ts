@@ -83,9 +83,22 @@ export interface ConversationState {
  * Represents the structured data that the AI can return in its <arete-data> blocks.
  * This includes both resume data and control signals like stepComplete.
  */
+/**
+ * Represents a proposed change to a field in the resume data, allowing the UI to highlight it.
+ */
+export interface ChangeProposal {
+  path: string; // e.g., "experience[0].achievements[1]"
+  oldValue: any;
+  newValue: any;
+  description: string;
+}
+
 export interface AreteDataResponse {
   // Control signals
   stepComplete?: InterviewStep;
+
+  // A specific change proposal to be reviewed by the user
+  changeProposal?: ChangeProposal;
   
   // Resume data (all optional since the AI might send partial updates)
   profile?: Partial<UserProfile>;
