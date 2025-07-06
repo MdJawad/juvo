@@ -103,7 +103,8 @@ export async function POST(req: NextRequest) {
     // Get the Gemini Pro model
     const model = genAI.getGenerativeModel({
       // model: 'gemini-pro',
-      model: 'gemini-2.5-pro'
+      // model: 'gemini-2.5-pro'
+      model: 'gemini-2.5-flash'
     });
     
     try {
