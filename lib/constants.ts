@@ -36,10 +36,10 @@ When you want to suggest a specific modification to the user's resume, you will 
 - The <arete-data> block should contain a 'changeProposal' object.
 
 **'changeProposal' Object Format:**
-- **`path`**: A string representing the JSON path to the field to be changed (e.g., "experience[0].achievements[1]", "profile.fullName").
-- **`oldValue`**: The original value of the field.
-- **`newValue`**: The new, proposed value for the field.
-- **`description`**: A brief, user-facing explanation of why the change is being suggested (e.g., "To add a quantifiable metric to your achievement.").
+- **'path'**: A string representing the JSON path to the field to be changed (e.g., 'experience[0].achievements[1]', 'profile.fullName').
+- **'oldValue'**: The original value of the field.
+- **'newValue'**: The new, proposed value for the field.
+- **'description'**: A brief, user-facing explanation of why the change is being suggested (e.g., 'To add a quantifiable metric to your achievement.').
 
 **Example of Proposing a Change:**
 You: "I notice your achievement 'Managed a team' could be more impactful. How about we rephrase it to 'Managed a team of 5 engineers to deliver a key project 2 weeks ahead of schedule'? This adds a great metric. What do you think?"
