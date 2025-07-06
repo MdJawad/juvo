@@ -86,6 +86,7 @@ export function useInterview() {
   const [currentStep, setCurrentStep] = useState<InterviewStep>(initialState.currentStep);
   const [progress, setProgress] = useState<number>(initialState.progress);
   const [isUploading, setIsUploading] = useState(false);
+  const [interviewStarted, setInterviewStarted] = useState(false);
   
   // New state to track which sections were populated from resume upload
   const [populatedFromResume, setPopulatedFromResume] = useState<PopulatedSections>({
@@ -262,113 +263,63 @@ export function useInterview() {
       if (result.structuredData) {
         // Update the resume data with the structured information
         setResumeData(prevData => deepmerge(prevData, result.structuredData) as Partial<ResumeData>);
-        
-        // Determine which sections are now complete based on the structured data
-        const newlyPopulatedSections = {
-          profile: isProfileComplete(result.structuredData.profile),
-          experience: isExperienceComplete(result.structuredData.experience),
-          education: isEducationComplete(result.structuredData.education),
-          skills: isSkillsComplete(result.structuredData.skills),
-          review: false,
-          done: false
-        };
-        
-        // Update our tracking of which sections came from the resume
-        setPopulatedFromResume(newlyPopulatedSections);
-        
-        // Create messages about what was extracted
-        const populatedSectionNames = Object.entries(newlyPopulatedSections)
-          .filter(([key, value]) => value && key !== 'review' && key !== 'done')
-          .map(([key]) => key);
-        
-        const missingSectionNames = Object.entries(newlyPopulatedSections)
-          .filter(([key, value]) => !value && key !== 'review' && key !== 'done')
-          .map(([key]) => key);
-        
-        // Generate a personalized message based on what was extracted
-        let responseMessage = `I've successfully parsed your resume and extracted your information.`;
-        
-        if (populatedSectionNames.length > 0) {
-          responseMessage += ` The following sections were populated: ${populatedSectionNames.join(', ')}.`;
-        }
-        
-        if (missingSectionNames.length > 0) {
-          responseMessage += ` We'll need to complete the following sections: ${missingSectionNames.join(', ')}.`;
-        }
-        
-        responseMessage += ` Please review the details in the preview panel.`;
-        
-        // Notify the user about the successful parsing
-        append({
-          id: uuidv4(),
-          role: 'assistant',
-          content: responseMessage,
-        });
+        setInterviewStarted(true);
 
-        // If the current step is already populated from the resume, move to the next incomplete step
+        // Use a timeout to allow the state to update before sending messages
         setTimeout(() => {
+          const newlyPopulatedSections: PopulatedSections = {
+            profile: isProfileComplete(result.structuredData.profile) && !completeSections.profile,
+            experience: isExperienceComplete(result.structuredData.experience) && !completeSections.experience,
+            education: isEducationComplete(result.structuredData.education) && !completeSections.education,
+            skills: isSkillsComplete(result.structuredData.skills) && !completeSections.skills,
+            review: false,
+            done: false
+          };
+          setPopulatedFromResume(newlyPopulatedSections);
+
+          const foundSections = Object.entries(newlyPopulatedSections)
+            .filter(([key, value]) => value && key !== 'review' && key !== 'done')
+            .map(([key]) => key);
+
+          let responseMessage = `I've successfully parsed your resume and extracted your information.`;
+          if (foundSections.length > 0) {
+            responseMessage += ` I found information for the following sections: ${foundSections.join(', ')}.`;
+          }
+
+          append({
+            id: uuidv4(),
+            role: 'assistant',
+            content: responseMessage,
+          });
+
           if (currentStep !== 'review' && newlyPopulatedSections[currentStep]) {
-            // Find the next incomplete section
             const nextIncompleteStep = findNextIncompleteStep(currentStep);
-            
             append({
               id: uuidv4(),
               role: 'assistant',
               content: `I see that your ${currentStep} section is already complete from your resume. Let's focus on the ${nextIncompleteStep} section instead.`,
             });
-            
-            // Update the current step
             setCurrentStep(nextIncompleteStep);
           } else {
-            // Ask about the current section or general improvements
             append({
               id: uuidv4(),
               role: 'assistant',
               content: `Would you like to make any changes to the information extracted from your resume?`,
             });
           }
-        }, 1000);
+        }, 100);
       } else {
-        // If structured data is not available, show the raw text and error details
-        const extractedText = result.rawText;
-        
-        if (!extractedText) {
-          throw new Error('The parsed document appears to be empty.');
-        }
-        
-        // Get detailed error information if available
+        // If structured data is not available, inform the user
         const errorMessage = result.error || 'Unknown error';
         const errorDetails = result.errorDetails || '';
-        
-        // Log error details for debugging
-        console.error('Resume parsing error:', errorMessage);
-        if (errorDetails) {
-          console.error('Error details:', errorDetails);
-        }
-        
-        // Handle different error types with appropriate user messages
-        if (errorMessage.includes('API key')) {
-          // API key configuration issue
-          append({
-            id: uuidv4(),
-            role: 'assistant',
-            content: `I've extracted the text from your resume, but I wasn't able to analyze it automatically due to an API configuration issue. The raw text has been extracted and you can continue manually.\n\n---\n\n${extractedText.substring(0, 1000)}${extractedText.length > 1000 ? '...' : ''}\n\n---\n\nLet's proceed with building your resume. What would you like to focus on first?`,
-          });
-        } else if (errorMessage.includes('JSON') || errorMessage.includes('structure')) {
-          // JSON parsing issue
-          append({
-            id: uuidv4(),
-            role: 'assistant',
-            content: `I've extracted the text from your resume, but there was an issue processing the structure automatically. Don't worry, we can continue with the information I've extracted.\n\n---\n\n${extractedText.substring(0, 1000)}${extractedText.length > 1000 ? '...' : ''}\n\n---\n\nLet me help you build a well-structured resume. Can you confirm if the information above looks correct?`,
-          });
-        } else {
-          // Generic error
-          append({
-            id: uuidv4(),
-            role: 'assistant',
-            content: `I've extracted the text from your resume, but I wasn't able to fully structure it automatically. Here's what I found:\n\n---\n\n${extractedText.substring(0, 1000)}${extractedText.length > 1000 ? '...' : ''}\n\n---\n\nLet's work together to build your resume. What aspects of your experience would you like to highlight?`,
-          });
-        }
+
+        console.error('Resume parsing failed:', errorMessage, errorDetails);
+
+        append({
+          id: uuidv4(),
+          role: 'assistant',
+          content: `I was unable to parse your resume automatically. This could be due to an unusual format or a problem with our parsing service. Please try uploading a different file or build your resume manually.`,
+        });
       }
 
     } catch (error) {
@@ -379,6 +330,19 @@ export function useInterview() {
       setIsUploading(false);
     }
   }, [append]);
+
+  const startConversation = useCallback(() => {
+    // Only start if there are no messages yet
+    if (messages.length === 0) {
+      append({
+        id: uuidv4(),
+        role: 'assistant',
+        content:
+          "Hello! I'm Arete, your expert career counselor. I'm here to guide you in building an exceptional resume. Let's start with your basic information. What is your full name?",
+      });
+      setInterviewStarted(true);
+    }
+  }, [append, messages]);
 
   const filteredMessages = messages.map(m => ({
     ...m,
@@ -396,5 +360,7 @@ export function useInterview() {
     currentStep,
     progress,
     handleResumeUpload,
+    startConversation,
+    interviewStarted,
   };
 } 

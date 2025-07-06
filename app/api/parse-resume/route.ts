@@ -36,9 +36,9 @@ export async function POST(req: NextRequest) {
     });
 
     if (!doclingResponse.ok) {
-      const errorText = await doclingResponse.text();
-      console.error('Docling service error:', errorText);
-      throw new Error(`Docling service failed with status ${doclingResponse.status}`);
+      const errorBody = await doclingResponse.json().catch(() => doclingResponse.text());
+      console.error('Docling service error:', errorBody);
+      throw new Error(`Docling service failed with status ${doclingResponse.status}: ${JSON.stringify(errorBody)}`);
     }
 
     const doclingResult = await doclingResponse.json();
@@ -102,7 +102,8 @@ export async function POST(req: NextRequest) {
     
     // Get the Gemini Pro model
     const model = genAI.getGenerativeModel({
-      model: 'gemini-pro',
+      // model: 'gemini-pro',
+      model: 'gemini-2.5-pro'
     });
     
     try {
