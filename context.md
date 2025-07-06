@@ -12,9 +12,9 @@ The application is a Next.js project that uses a conversational AI to guide user
 - **Core Logic:** The `useInterview` hook (`app/hooks/useInterview.ts`) manages the conversational state, user input, and data extraction.
 - **AI Prompting:** The primary system prompt is located in `lib/constants.ts` (`AI_SYSTEM_PROMPT`).
 
-### Architecture Goal: Multi-Backend AI Support
+### Implemented: Multi-Backend AI Support
 
-To ensure flexibility, avoid vendor lock-in, and manage API rate limits, the application will be refactored to support multiple AI backends. The system will be designed to easily switch between different providers based on environment configuration.
+To ensure flexibility, avoid vendor lock-in, and manage API rate limits, the application has been refactored to support multiple AI backends. The system is designed to easily switch between different providers based on environment configuration.
 
 **Supported Backends:**
 
@@ -83,8 +83,10 @@ Once the core workflow is in place, development will focus on refining the user 
 - **Enhanced Skills Extraction:** Improve the accuracy of the resume parser.
 - **Resume Enhancement Guidance:** Add features to help users improve the quality of their resume content.
 
-#### **Implementation Priority:**
+#### **Implementation Priority & Focus**
 
 1. **Phase 1:** Establish the Core Workflow (Top Priority)
 2. **Phase 2:** Refine and Enhance (Subsequent releases)
-3. **Phase 3:** Implement Multi-Backend AI Support
+3. ~~**Phase 3:** Implement Multi-Backend AI Support~~ (Completed)
+
+**Development Focus:** Although the create resume from scratch functionality exists, we will not be prioritising the development of this feature unless explicitly stated, our goal will be to focus on the upload resume + refining the resume as per the job description.

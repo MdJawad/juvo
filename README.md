@@ -20,6 +20,38 @@ You can start editing the page by modifying `app/page.tsx`. The page auto-update
 
 This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
 
+## Running with a Local AI (Ollama)
+
+To run the application with a local AI model using Ollama, follow these steps:
+
+1.  **Start the `docling` Docker container:**
+
+    ```bash
+    docker run -d -p 3001:3001 --name docling ghcr.io/zelip/docling:latest
+    ```
+
+2.  **Run the Ollama model:**
+
+    First, ensure you have Ollama installed. Then, pull and run a model. We recommend `gemma:2b` for a balance of performance and resource usage, but you can use other models.
+
+    ```bash
+    ollama run gemma:2b
+    ```
+
+3.  **Configure Environment Variables:**
+
+    Create a `.env.local` file in the root of the project and add the following line to it. This tells the application to use the local Ollama-compatible endpoint.
+
+    ```
+    AI_PROVIDER=ollama
+    ```
+
+4.  **Start the development server:**
+
+    ```bash
+    npm run dev
+    ```
+
 ## Learn More
 
 To learn more about Next.js, take a look at the following resources:
