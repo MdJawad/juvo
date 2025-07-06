@@ -1,0 +1,73 @@
+# Arete AI Resume Builder Configuration
+# This file contains configuration settings and instructions for the Arete project
+
+# Application information
+app:
+  name: "Arete AI Resume Builder"
+  description: "An AI-powered resume builder that helps users create and tailor professional resumes"
+  version: "1.0.0"
+
+# Development settings
+development:
+  # Node.js version
+  node_version: "18.x"
+  # Package manager
+  package_manager: "npm"
+  # Development commands
+  commands:
+    dev: "npm run dev"
+    build: "npm run build"
+    start: "npm run start"
+    lint: "npm run lint"
+    test: "npm run test"
+
+# AI configuration
+ai:
+  # Available AI backends
+  backends:
+    - name: "Google Gemini"
+      default: true
+      env_var: "GEMINI_API_KEY"
+    - name: "OpenAI Compatible"
+      default: false
+      env_var: "OPENAI_API_KEY"
+      base_url_env_var: "OPENAI_API_BASE_URL"
+  
+  # System prompt configuration
+  prompts:
+    main_system_prompt: "lib/constants.ts:AI_SYSTEM_PROMPT"
+    resume_parser_prompt: "lib/constants.ts:RESUME_PARSER_PROMPT"
+    tailoring_prompt: "lib/constants.ts:TAILORING_PROMPT"
+
+# Feature flags
+features:
+  resume_change_highlighting: true
+  multi_backend_support: true
+  build_from_scratch: false  # Deprioritized as per user preference
+  resume_upload_and_refine: true
+
+# User workflow configuration
+workflows:
+  - name: "Upload and Refine"
+    enabled: true
+    description: "User uploads an existing resume and refines it based on job descriptions"
+    entry_point: "ResumeUploader"
+    
+  - name: "Build from Scratch"
+    enabled: false  # Deprioritized
+    description: "User builds a resume from scratch through an AI interview"
+    entry_point: "startConversation"
+
+# Documentation
+documentation:
+  project_context: "context.md"
+  architecture_diagram: "docs/architecture.png"  # Placeholder for future documentation
+
+# Deployment settings
+deployment:
+  provider: "vercel"
+  environment:
+    - name: "production"
+      url: "https://arete-resume.vercel.app"  # Placeholder URL
+    - name: "development"
+      url: "https://dev.arete-resume.vercel.app"  # Placeholder URL

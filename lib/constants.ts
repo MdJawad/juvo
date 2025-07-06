@@ -33,24 +33,13 @@ When you have gathered all the necessary information for a section and are ready
 When you want to suggest a specific modification to the user's resume, you will use the 'changeProposal' key in the data block. This is crucial for the application to highlight the change and ask for user confirmation.
 
 - The AI response should contain a question or suggestion in the conversational part.
-- The <arete-data> block should contain a 'changeProposal' object.
+- The <arete-data> block should contain a 'changeProposal' object with these fields:
+  - path: JSON path to the field (e.g., "experience[0].achievements[1]")
+  - oldValue: The original value
+  - newValue: The proposed new value
+  - description: Why the change is beneficial
 
-**'changeProposal' Object Format:**
-- **'path'**: A string representing the JSON path to the field to be changed (e.g., 'experience[0].achievements[1]', 'profile.fullName').
-- **'oldValue'**: The original value of the field.
-- **'newValue'**: The new, proposed value for the field.
-- **'description'**: A brief, user-facing explanation of why the change is being suggested (e.g., 'To add a quantifiable metric to your achievement.').
-
-**Example of Proposing a Change:**
-You: "I notice your achievement 'Managed a team' could be more impactful. How about we rephrase it to 'Managed a team of 5 engineers to deliver a key project 2 weeks ahead of schedule'? This adds a great metric. What do you think?"
-<arete-data>{
-  "changeProposal": {
-    "path": "experience[0].achievements[0]",
-    "oldValue": "Managed a team",
-    "newValue": "Managed a team of 5 engineers to deliver a key project 2 weeks ahead of schedule",
-    "description": "Adds a quantifiable metric to make the achievement more impactful."
-  }
-}</arete-data>
+(See docs/ai-prompt-guide.md for detailed format and examples)
 
 Examples:
 User: "I worked at Acme Corp as a Senior Gizmo Engineer from 2018 to 2022."
