@@ -87,6 +87,9 @@ export function useInterview() {
   const [progress, setProgress] = useState<number>(initialState.progress);
   const [isUploading, setIsUploading] = useState(false);
   const [interviewStarted, setInterviewStarted] = useState(false);
+  const [viewMode, setViewMode] = useState<'chat' | 'hub'>('chat');
+  const [isTailorModalOpen, setIsTailorModalOpen] = useState(false);
+  const [isTailoring, setIsTailoring] = useState(false);
   
   // New state to track which sections were populated from resume upload
   const [populatedFromResume, setPopulatedFromResume] = useState<PopulatedSections>({
@@ -264,6 +267,7 @@ export function useInterview() {
         // Update the resume data with the structured information
         setResumeData(prevData => deepmerge(prevData, result.structuredData) as Partial<ResumeData>);
         setInterviewStarted(true);
+        setViewMode('hub');
 
         // Use a timeout to allow the state to update before sending messages
         setTimeout(() => {
@@ -331,6 +335,63 @@ export function useInterview() {
     }
   }, [append]);
 
+  const openTailorModal = () => setIsTailorModalOpen(true);
+  const closeTailorModal = () => setIsTailorModalOpen(false);
+
+  const handleTailorResume = useCallback(async (jobDescription: string) => {
+    setIsTailoring(true);
+    closeTailorModal(); // Close modal immediately to improve UX
+
+    try {
+      const response = await fetch('/api/tailor-resume', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ resumeData, jobDescription }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to tailor resume');
+      }
+
+      const result = await response.json();
+      
+      // Switch to chat view to display the suggestions
+      setViewMode('chat');
+      
+      // Create and append an introductory message
+      const introMessage = {
+        id: uuidv4(),
+        role: 'assistant' as const,
+        content: "Great! I've analyzed the job description and your resume. Here are a few suggestions to make your resume stand out. Let's tackle them one by one.",
+      };
+      append(introMessage);
+
+      // Append each suggestion as a separate message
+      if (result.suggestions && Array.isArray(result.suggestions)) {
+        result.suggestions.forEach((suggestion: string) => {
+          append({
+            id: uuidv4(),
+            role: 'assistant' as const,
+            content: suggestion,
+          });
+        });
+      }
+
+    } catch (error) {
+      console.error('Error tailoring resume:', error);
+      // Inform the user of the error in the chat
+      append({
+        id: uuidv4(),
+        role: 'assistant',
+        content: "I'm sorry, I encountered an error while analyzing the job description. Please try again.",
+      });
+    } finally {
+      setIsTailoring(false);
+    }
+  }, [resumeData, append, closeTailorModal]);
+
   const startConversation = useCallback(() => {
     // Only start if there are no messages yet
     if (messages.length === 0) {
@@ -341,6 +402,7 @@ export function useInterview() {
           "Hello! I'm Arete, your expert career counselor. I'm here to guide you in building an exceptional resume. Let's start with your basic information. What is your full name?",
       });
       setInterviewStarted(true);
+      setViewMode('chat');
     }
   }, [append, messages]);
 
@@ -362,5 +424,11 @@ export function useInterview() {
     handleResumeUpload,
     startConversation,
     interviewStarted,
+    viewMode,
+    isTailorModalOpen,
+    isTailoring,
+    openTailorModal,
+    closeTailorModal,
+    handleTailorResume,
   };
 } 

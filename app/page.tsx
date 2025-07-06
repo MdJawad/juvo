@@ -6,6 +6,7 @@ import { ResumePreview } from '@/app/components/ResumePreview';
 import { useInterview } from '@/app/hooks/useInterview';
 import { Bot } from 'lucide-react';
 import { ResumeUploader } from './components/ResumeUploader';
+import JobDescriptionModal from './components/JobDescriptionModal';
 
 export default function Home() {
   const {
@@ -21,10 +22,16 @@ export default function Home() {
     handleResumeUpload,
     startConversation,
     interviewStarted,
+    viewMode,
+    isTailorModalOpen,
+    isTailoring,
+    openTailorModal,
+    closeTailorModal,
+    handleTailorResume,
   } = useInterview();
 
-  // The main interview UI, shown after a path is chosen
-  const interviewUI = (
+  // The main interview UI for the 'chat' view
+  const chatUI = (
     <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 h-[calc(100vh-150px)]">
       {/* Left Column: Progress & Interview */}
       <div className="lg:col-span-4 xl:col-span-3 flex flex-col gap-8">
@@ -49,6 +56,33 @@ export default function Home() {
 
       {/* Right Column: Resume Preview */}
       <div className="hidden xl:block xl:col-span-4">
+        <ResumePreview resumeData={resumeData} />
+      </div>
+    </div>
+  );
+
+  // The new Master Resume Hub UI for the 'hub' view
+  const hubUI = (
+    <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 h-[calc(100vh-150px)]">
+      {/* Left Column: Hub Controls */}
+      <div className="lg:col-span-4 xl:col-span-3 flex flex-col gap-8 p-4 bg-white rounded-lg shadow-md">
+        <h2 className="text-2xl font-bold text-gray-800">Master Resume</h2>
+        <p className="text-gray-600">
+          This is your central resume hub. From here, you can tailor this resume for specific job applications.
+        </p>
+        <div className="mt-auto pt-4 border-t border-gray-200">
+          <button 
+            onClick={openTailorModal}
+            className="w-full px-6 py-3 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition-colors disabled:bg-gray-400"
+            disabled={isLoading || isUploading || isTailoring}
+          >
+            Tailor for a Job
+          </button>
+        </div>
+      </div>
+
+      {/* Right Column: Resume Preview */}
+      <div className="lg:col-span-8 xl:col-span-9">
         <ResumePreview resumeData={resumeData} />
       </div>
     </div>
@@ -96,8 +130,14 @@ export default function Home() {
           </div>
         </header>
 
-        {interviewStarted ? interviewUI : selectionScreen}
+        {interviewStarted ? (viewMode === 'hub' ? hubUI : chatUI) : selectionScreen}
 
+        <JobDescriptionModal
+          isOpen={isTailorModalOpen}
+          onClose={closeTailorModal}
+          onSubmit={handleTailorResume}
+          isLoading={isTailoring}
+        />
       </div>
     </main>
   );
