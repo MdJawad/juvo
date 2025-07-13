@@ -60,7 +60,7 @@ export function useInterview() {
     }
   }, []);
 
-  const { messages, append, input, handleInputChange, handleSubmit, isLoading: isChatLoading } = useChat({
+  const { messages, setMessages, append, input, handleInputChange, handleSubmit, isLoading: isChatLoading } = useChat({
     api: '/api/chat',
     initialMessages: [
       {
@@ -88,25 +88,26 @@ export function useInterview() {
       role: 'assistant' as const,
       content: `**Gap ${currentGapIndex + 1} of ${gapAnalysis.gaps.length}** (${priorityText} Priority - ${categoryText})\n\n**${gap.title}**\n\n${gap.description}\n\nJob Requirement: ${gap.jobRequirement}\n\nCurrent Resume: ${gap.currentResumeState}\n\n${gap.suggestedQuestion}`,
     };
-    append(message);
-  }, [gapAnalysis, currentGapIndex, append]);
+    // Use functional update form of setMessages to avoid dependency on 'messages'
+    setMessages(prevMessages => [...prevMessages, message]);
+  }, [gapAnalysis, currentGapIndex, setMessages]);
 
   const moveToNextGap = useCallback(() => {
     if (!gapAnalysis) return;
     const nextIndex = currentGapIndex + 1;
     if (nextIndex >= gapAnalysis.gaps.length) {
       setIsGapAnalysisComplete(true);
-      append({ id: uuidv4(), role: 'assistant', content: "Great! We've addressed all the identified gaps." });
+      setMessages(prev => [...prev, { id: uuidv4(), role: 'assistant', content: "Great! We've addressed all the identified gaps." }]);
     } else {
       setCurrentGapIndex(nextIndex);
     }
-  }, [gapAnalysis, currentGapIndex, append]);
+  }, [gapAnalysis, currentGapIndex, setMessages]);
 
   useEffect(() => {
-    if (isTailoringMode && gapAnalysis && !isGapAnalysisComplete) {
+    if (isTailoringMode && gapAnalysis && !isGapAnalysisComplete && currentGapIndex < gapAnalysis.gaps.length) {
       presentCurrentGap();
     }
-  }, [currentGapIndex, isTailoringMode, gapAnalysis, isGapAnalysisComplete, presentCurrentGap]);
+  }, [isTailoringMode, gapAnalysis, isGapAnalysisComplete, currentGapIndex, presentCurrentGap]);
 
   const generateChangeProposal = useCallback((userResponse: string) => {
     if (!gapAnalysis || currentGapIndex === null) return;
@@ -128,17 +129,17 @@ export function useInterview() {
     if (!proposedChange) return;
     // This is a simplified data update. A real implementation would use the 'path'.
     const updatedSummary = resumeData.profile?.careerSummary ? `${resumeData.profile.careerSummary}\n${proposedChange.newValue}` : proposedChange.newValue;
-    setResumeData(deepmerge(resumeData, { profile: { careerSummary: updatedSummary } }));
+    setResumeData(prevData => deepmerge(prevData, { profile: { careerSummary: updatedSummary } }));
     setProposedChange(null);
-    append({ id: uuidv4(), role: 'assistant', content: "Great, I've updated your resume." });
+    setMessages(prev => [...prev, { id: uuidv4(), role: 'assistant', content: "Great, I've updated your resume." }]);
     moveToNextGap();
-  }, [proposedChange, resumeData, append, moveToNextGap]);
+  }, [proposedChange, resumeData, moveToNextGap, setMessages]);
 
   const rejectChange = useCallback(() => {
     setProposedChange(null);
-    append({ id: uuidv4(), role: 'assistant', content: "No problem, I've discarded that suggestion." });
+    setMessages(prev => [...prev, { id: uuidv4(), role: 'assistant', content: "No problem, I've discarded that suggestion." }]);
     moveToNextGap();
-  }, [append, moveToNextGap]);
+  }, [moveToNextGap, setMessages]);
 
   const customHandleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -154,15 +155,11 @@ export function useInterview() {
 
   const handleTailorResume = useCallback(async (jobDescription: string) => {
     setIsTailoring(true);
-    append({ id: uuidv4(), role: 'user', content: `Job Description: ${jobDescription}` });
-    
-    // Add a progress message to indicate processing has started
-    const processingMessageId = uuidv4();
-    append({ 
-      id: processingMessageId, 
-      role: 'assistant', 
-      content: 'Processing your job description... This may take up to a minute.' 
-    });
+    // Use setMessages to add multiple messages without causing re-renders from append
+    setMessages(prev => [...prev, 
+      { id: uuidv4(), role: 'user', content: `Job Description: ${jobDescription}` },
+      { id: uuidv4(), role: 'assistant', content: 'Processing your job description... This may take up to a minute.' }
+    ]);
     
     // Create an AbortController for timeout handling
     const controller = new AbortController();
@@ -199,11 +196,11 @@ export function useInterview() {
       setIsGapAnalysisComplete(false);
       
       // Replace the processing message with the result message
-      append({ 
+      setMessages(prev => [...prev.slice(0, -1), { 
         id: uuidv4(), 
         role: 'assistant', 
         content: `I've analyzed your resume and found ${result.gaps.length} areas for improvement.` 
-      });
+      }]);
     } catch (error) {
       console.error('Error tailoring resume:', error);
       
@@ -220,13 +217,13 @@ export function useInterview() {
         }
       }
       
-      append({ id: uuidv4(), role: 'assistant', content: errorMessage });
+      setMessages(prev => [...prev.slice(0, -1), { id: uuidv4(), role: 'assistant', content: errorMessage }]);
     } finally {
       clearTimeout(timeoutId);
       setIsTailoring(false);
       setIsTailorModalOpen(false);
     }
-  }, [resumeData, append]);
+  }, [resumeData, setMessages]);
 
   const handleResumeUpload = useCallback(async (file: File) => {
     setIsUploading(true);
@@ -239,13 +236,14 @@ export function useInterview() {
       setResumeData(result.structuredData);
       setInterviewStarted(true);
       setViewMode('hub');
-      append({ id: uuidv4(), role: 'assistant', content: "I've successfully parsed your resume." });
+      setMessages(prev => [...prev, { id: uuidv4(), role: 'assistant', content: "I've successfully parsed your resume." }]);
     } catch (error) {
       console.error('Failed to upload and parse resume:', error);
+      setMessages(prev => [...prev, { id: uuidv4(), role: 'assistant', content: `Error parsing resume: ${error instanceof Error ? error.message : 'Unknown error'}` }]);
     } finally {
       setIsUploading(false);
     }
-  }, [append]);
+  }, [setMessages]);
 
   return {
     messages: filteredMessages,
