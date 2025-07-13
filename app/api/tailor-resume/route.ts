@@ -30,6 +30,11 @@ interface GapAnalysisResponse {
 }
 
 export async function POST(req: Request) {
+  // Create a timeout promise that rejects after 85 seconds
+  const timeoutPromise = new Promise((_, reject) => {
+    setTimeout(() => reject(new Error('AI processing timeout')), 85000); // 85 seconds
+  });
+
   try {
     const body = await req.json();
     const { resumeData, jobDescription } = body;
@@ -37,6 +42,14 @@ export async function POST(req: Request) {
     if (!resumeData || !jobDescription) {
       return NextResponse.json(
         { error: 'Missing resume data or job description' },
+        { status: 400 }
+      );
+    }
+
+    // Validate job description length to prevent very long processing times
+    if (jobDescription.length > 10000) {
+      return NextResponse.json(
+        { error: 'Job description is too long. Please limit to 10,000 characters.' },
         { status: 400 }
       );
     }
@@ -49,7 +62,11 @@ export async function POST(req: Request) {
       jobDescription,
     ].join('\n\n');
 
-    const jsonString = await generateText(prompt, 'gemini-1.5-pro-latest');
+    // Race between the AI generation and the timeout
+    const jsonString = await Promise.race([
+      generateText(prompt, 'gemini-1.5-pro-latest'),
+      timeoutPromise
+    ]) as string;
     
     // The AI is instructed to return a JSON string. We need to parse it.
     const cleanedJsonString = jsonString.replace(/```json/g, '').replace(/```/g, '').trim();
@@ -112,7 +129,7 @@ export async function POST(req: Request) {
           throw new Error('Could not parse AI response in any supported format');
         }
       } catch (fallbackError) {
-        throw new Error('Failed to parse AI response');
+        throw new Error('Failed to parse AI response: ' + (parseError instanceof Error ? parseError.message : String(parseError)));
       }
     }
 
@@ -120,9 +137,27 @@ export async function POST(req: Request) {
 
   } catch (error) {
     console.error('Error in tailor-resume endpoint:', error);
+    
+    // Provide more specific error messages based on error type
+    let errorMessage = 'An internal server error occurred';
+    let statusCode = 500;
+    
+    if (error instanceof Error) {
+      if (error.message === 'AI processing timeout') {
+        errorMessage = 'The AI processing took too long. Please try again with a shorter job description.';
+        statusCode = 408; // Request Timeout
+      } else if (error.message.includes('Failed to parse')) {
+        errorMessage = 'Failed to process the AI response. Please try again.';
+        statusCode = 500;
+      }
+    }
+    
     return NextResponse.json(
-      { error: 'An internal server error occurred', details: error instanceof Error ? error.message : String(error) },
-      { status: 500 }
+      { 
+        error: errorMessage, 
+        details: error instanceof Error ? error.message : String(error) 
+      },
+      { status: statusCode }
     );
   }
 }

@@ -155,23 +155,74 @@ export function useInterview() {
   const handleTailorResume = useCallback(async (jobDescription: string) => {
     setIsTailoring(true);
     append({ id: uuidv4(), role: 'user', content: `Job Description: ${jobDescription}` });
+    
+    // Add a progress message to indicate processing has started
+    const processingMessageId = uuidv4();
+    append({ 
+      id: processingMessageId, 
+      role: 'assistant', 
+      content: 'Processing your job description... This may take up to a minute.' 
+    });
+    
+    // Create an AbortController for timeout handling
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 90000); // 90 second timeout
+    
     try {
       const response = await fetch('/api/tailor-resume', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ resumeData, jobDescription }),
+        signal: controller.signal
       });
-      if (!response.ok) throw new Error('Failed to get tailoring suggestions.');
+      
+      clearTimeout(timeoutId);
+      
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(
+          errorData.error || 
+          `Failed to get tailoring suggestions. Server responded with status ${response.status}`
+        );
+      }
+      
       const result: GapAnalysisResult = await response.json();
+      
+      // Validate the response structure
+      if (!result || !result.gaps || !Array.isArray(result.gaps)) {
+        throw new Error('Invalid response format from the server');
+      }
+      
       setGapAnalysis(result);
       setIsTailoringMode(true);
       setCurrentGapIndex(0);
       setIsGapAnalysisComplete(false);
-      append({ id: uuidv4(), role: 'assistant', content: `I've analyzed your resume and found ${result.gaps.length} areas for improvement.` });
+      
+      // Replace the processing message with the result message
+      append({ 
+        id: uuidv4(), 
+        role: 'assistant', 
+        content: `I've analyzed your resume and found ${result.gaps.length} areas for improvement.` 
+      });
     } catch (error) {
       console.error('Error tailoring resume:', error);
-      append({ id: uuidv4(), role: 'assistant', content: 'Sorry, I encountered an error.' });
+      
+      // Provide more specific error messages based on the error type
+      let errorMessage = 'Sorry, I encountered an error while analyzing your resume.';
+      
+      if (error instanceof DOMException && error.name === 'AbortError') {
+        errorMessage = 'The request took too long to process. Please try again with a shorter job description or try again later.';
+      } else if (error instanceof Error) {
+        if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
+          errorMessage = 'Network error. Please check your internet connection and try again.';
+        } else {
+          errorMessage = `Error: ${error.message}`;
+        }
+      }
+      
+      append({ id: uuidv4(), role: 'assistant', content: errorMessage });
     } finally {
+      clearTimeout(timeoutId);
       setIsTailoring(false);
       setIsTailorModalOpen(false);
     }
