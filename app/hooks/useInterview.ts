@@ -16,6 +16,7 @@ import {
 } from '@/lib/types';
 import { INTERVIEW_FLOW } from '@/lib/constants';
 import { deepmerge } from 'deepmerge-ts';
+import { updateStrategyRegistry } from '@/lib/update-strategies';
 
 const initialResumeData: Partial<ResumeData> = {
   profile: {},
@@ -111,15 +112,18 @@ export function useInterview() {
 
   const generateChangeProposal = useCallback((userResponse: string) => {
     if (!gapAnalysis || currentGapIndex === null) return;
-    const gap = gapAnalysis.gaps[currentGapIndex];
-    const proposal: ChangeProposal = {
-      path: ``, // Simplified for now
-      oldValue: gap.currentResumeState,
-      newValue: userResponse,
-      description: `Based on your response for '${gap.title}', I suggest this update:`
-    };
+    
+    const currentGap = gapAnalysis.gaps[currentGapIndex];
+    
+    // Use the update strategy registry to generate the appropriate change proposal
+    const proposal = updateStrategyRegistry.generateChangeProposal(
+      currentGap,
+      userResponse,
+      resumeData
+    );
+    
     setProposedChange(proposal);
-  }, [gapAnalysis, currentGapIndex]);
+  }, [gapAnalysis, currentGapIndex, resumeData]);
 
   const handleGapResponse = useCallback((userResponse: string) => {
     generateChangeProposal(userResponse);
@@ -127,13 +131,90 @@ export function useInterview() {
 
   const acceptChange = useCallback(() => {
     if (!proposedChange) return;
-    // This is a simplified data update. A real implementation would use the 'path'.
-    const updatedSummary = resumeData.profile?.careerSummary ? `${resumeData.profile.careerSummary}\n${proposedChange.newValue}` : proposedChange.newValue;
-    setResumeData(prevData => deepmerge(prevData, { profile: { careerSummary: updatedSummary } }));
+    
+    // Use the path from the change proposal to update the correct section
+    const pathParts = proposedChange.path.split('.');
+    
+    // Handle array paths like 'experience[0].achievements'
+    let updateObject: any = {};
+    let currentObj = updateObject;
+    let arrayIndex: number | null = null;
+    let arrayPath: string | null = null;
+    
+    for (let i = 0; i < pathParts.length; i++) {
+      const part = pathParts[i];
+      const arrayMatch = part.match(/^(\w+)\[(\d+)\]$/);
+      
+      if (arrayMatch) {
+        // Handle array path like 'experience[0]'
+        const [, arrayName, indexStr] = arrayMatch;
+        arrayPath = arrayName;
+        arrayIndex = parseInt(indexStr, 10);
+        
+        if (i === pathParts.length - 1) {
+          // This is the last part (shouldn't happen with our current paths)
+          currentObj[arrayName] = [];
+        } else {
+          currentObj[arrayName] = [];
+          // We'll handle the next part (field in the array item) outside the loop
+          break;
+        }
+      } else if (i === pathParts.length - 1) {
+        // Last part is the field to update
+        currentObj[part] = proposedChange.newValue;
+      } else {
+        // Create nested object
+        currentObj[part] = {};
+        currentObj = currentObj[part];
+      }
+    }
+    
+    // Special handling for array paths
+    if (arrayPath && arrayIndex !== null && pathParts.length > 1) {
+      const lastField = pathParts[pathParts.length - 1];
+      
+      // Handle different types of array fields
+      if (lastField === 'achievements') {
+        // Handle array of strings (e.g., experience[0].achievements)
+        setResumeData(prevData => {
+          const newData = { ...prevData };
+          
+          if (!newData[arrayPath as keyof typeof newData]) {
+            // Create the array if it doesn't exist
+            (newData as any)[arrayPath] = [];
+          }
+          
+          const targetArray = (newData as any)[arrayPath] as any[];
+          
+          // Ensure the array has enough elements
+          while (targetArray.length <= arrayIndex) {
+            targetArray.push({});
+          }
+          
+          // Set the value
+          if (!targetArray[arrayIndex][lastField]) {
+            targetArray[arrayIndex][lastField] = [];
+          }
+          
+          // For achievements, append new bullets without duplicates
+          targetArray[arrayIndex][lastField] = [
+            ...new Set([...targetArray[arrayIndex][lastField], ...(proposedChange.newValue as string[])])
+          ];
+          
+          return newData;
+        });
+      } else {
+        // Other array field types can be added here
+      }
+    } else {
+      // Regular object updates
+      setResumeData(prevData => deepmerge(prevData, updateObject));
+    }
+    
     setProposedChange(null);
     setMessages(prev => [...prev, { id: uuidv4(), role: 'assistant', content: "Great, I've updated your resume." }]);
     moveToNextGap();
-  }, [proposedChange, resumeData, moveToNextGap, setMessages]);
+  }, [proposedChange, setResumeData, moveToNextGap, setMessages]);
 
   const rejectChange = useCallback(() => {
     setProposedChange(null);
@@ -194,6 +275,7 @@ export function useInterview() {
       setIsTailoringMode(true);
       setCurrentGapIndex(0);
       setIsGapAnalysisComplete(false);
+      setViewMode('chat'); // Switch to chat view to show gap analysis and interview panel
       
       // Replace the processing message with the result message
       setMessages(prev => [...prev.slice(0, -1), { 

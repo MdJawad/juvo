@@ -1,0 +1,328 @@
+import { ResumeGap, ResumeData, WorkExperience } from './types';
+import { extractCompanyFromResponse, formatExperienceBullets, extractTechnicalSkills, formatSummaryParagraph } from './resume-formatter';
+
+/**
+ * Interface for section update strategies
+ * Strategy pattern for handling different types of resume updates
+ */
+export interface SectionUpdateStrategy {
+  /**
+   * Determines if this strategy can handle the update for the given gap and response
+   */
+  canHandle(gap: ResumeGap, userResponse: string, resumeData: Partial<ResumeData>): boolean;
+  
+  /**
+   * Gets the path to update in the resume data
+   */
+  getUpdatePath(gap: ResumeGap, userResponse: string, resumeData: Partial<ResumeData>): string;
+  
+  /**
+   * Formats the user response appropriately for this section type
+   */
+  formatValue(gap: ResumeGap, userResponse: string, resumeData: Partial<ResumeData>, path: string): any;
+  
+  /**
+   * Returns the current value at the specified path in the resume data
+   */
+  getCurrentValue(path: string, resumeData: Partial<ResumeData>): any;
+}
+
+/**
+ * Base class for section update strategies with common functionality
+ */
+abstract class BaseSectionUpdateStrategy implements SectionUpdateStrategy {
+  abstract canHandle(gap: ResumeGap, userResponse: string, resumeData: Partial<ResumeData>): boolean;
+  abstract getUpdatePath(gap: ResumeGap, userResponse: string, resumeData: Partial<ResumeData>): string;
+  abstract formatValue(gap: ResumeGap, userResponse: string, resumeData: Partial<ResumeData>, path: string): any;
+  
+  /**
+   * Get the current value at a given path in the resume data
+   */
+  getCurrentValue(path: string, resumeData: Partial<ResumeData>): any {
+    const parts = path.split('.');
+    let current: any = resumeData;
+    
+    for (const part of parts) {
+      // Handle array paths like "experience[0]"
+      const arrayMatch = part.match(/^(\w+)\[(\d+)\]$/);
+      
+      if (arrayMatch) {
+        const [, arrayName, indexStr] = arrayMatch;
+        const index = parseInt(indexStr, 10);
+        
+        if (!current[arrayName] || !Array.isArray(current[arrayName]) || index >= current[arrayName].length) {
+          return undefined;
+        }
+        
+        current = current[arrayName][index];
+      } else if (current && current[part] !== undefined) {
+        current = current[part];
+      } else {
+        return undefined;
+      }
+    }
+    
+    return current;
+  }
+}
+
+/**
+ * Strategy for updating work experience
+ */
+export class ExperienceUpdateStrategy extends BaseSectionUpdateStrategy {
+  canHandle(gap: ResumeGap, userResponse: string, resumeData: Partial<ResumeData>): boolean {
+    // Handle experience gaps or responses that mention a company in the resume
+    if (gap.category === 'experience') return true;
+    
+    // Check if any company from resume is mentioned
+    const companyName = extractCompanyFromResponse(userResponse, resumeData);
+    return companyName !== null;
+  }
+  
+  getUpdatePath(gap: ResumeGap, userResponse: string, resumeData: Partial<ResumeData>): string {
+    // Try to extract company name
+    const companyName = extractCompanyFromResponse(userResponse, resumeData);
+    
+    if (companyName) {
+      const companyIndex = this.findCompanyIndex(companyName, resumeData);
+      
+      if (companyIndex >= 0) {
+        return `experience[${companyIndex}].achievements`;
+      }
+    }
+    
+    // If no specific company found but it's an experience gap, 
+    // update the most recent/relevant experience
+    if (gap.category === 'experience' && resumeData.experience && resumeData.experience.length > 0) {
+      // For simplicity, update the first experience entry
+      // In a more sophisticated implementation, we could determine the most relevant one
+      return 'experience[0].achievements';
+    }
+    
+    // Fallback to career summary if no appropriate experience entry found
+    return 'profile.careerSummary';
+  }
+  
+  formatValue(gap: ResumeGap, userResponse: string, resumeData: Partial<ResumeData>, path: string): any {
+    if (path.endsWith('.achievements')) {
+      // Format as bullet points for experience achievements
+      const bulletPoints = formatExperienceBullets(userResponse);
+      
+      // Get current achievements
+      const currentAchievements = this.getCurrentValue(path, resumeData) || [];
+      
+      // Return combined achievements without duplicates
+      return [...new Set([...currentAchievements, ...bulletPoints])];
+    }
+    
+    // Default format for other experience fields
+    return userResponse;
+  }
+  
+  private findCompanyIndex(company: string, resumeData: Partial<ResumeData>): number {
+    return resumeData.experience?.findIndex(exp => 
+      exp.company === company || exp.company.includes(company) || company.includes(exp.company)
+    ) ?? -1;
+  }
+}
+
+/**
+ * Strategy for updating technical or soft skills
+ */
+export class SkillsUpdateStrategy extends BaseSectionUpdateStrategy {
+  canHandle(gap: ResumeGap, userResponse: string, resumeData: Partial<ResumeData>): boolean {
+    return gap.category === 'technical_skills' || gap.category === 'soft_skills';
+  }
+  
+  getUpdatePath(gap: ResumeGap, userResponse: string, resumeData: Partial<ResumeData>): string {
+    if (gap.category === 'technical_skills') {
+      return 'skills.technical';
+    } else {
+      return 'skills.soft';
+    }
+  }
+  
+  formatValue(gap: ResumeGap, userResponse: string, resumeData: Partial<ResumeData>, path: string): any {
+    let skills: string[] = [];
+    
+    if (path === 'skills.technical') {
+      skills = extractTechnicalSkills(userResponse);
+    } else {
+      // For soft skills, simple extraction - in a real app, this would be more sophisticated
+      skills = userResponse
+        .split(/[,.]/)
+        .map(s => s.trim())
+        .filter(s => s.length > 10 && s.length < 50);
+      
+      // If no skills were extracted, use the whole response
+      if (skills.length === 0) {
+        skills = [userResponse];
+      }
+    }
+    
+    // Get current skills
+    const currentSkills = this.getCurrentValue(path, resumeData) || [];
+    
+    // Return combined skills without duplicates
+    return [...new Set([...currentSkills, ...skills])];
+  }
+}
+
+/**
+ * Strategy for updating career summary
+ */
+export class SummaryUpdateStrategy extends BaseSectionUpdateStrategy {
+  canHandle(gap: ResumeGap, userResponse: string, resumeData: Partial<ResumeData>): boolean {
+    return gap.category === 'summary';
+  }
+  
+  getUpdatePath(gap: ResumeGap, userResponse: string, resumeData: Partial<ResumeData>): string {
+    return 'profile.careerSummary';
+  }
+  
+  formatValue(gap: ResumeGap, userResponse: string, resumeData: Partial<ResumeData>, path: string): any {
+    const currentSummary = this.getCurrentValue(path, resumeData);
+    return formatSummaryParagraph(userResponse, currentSummary);
+  }
+}
+
+/**
+ * Strategy for updating education
+ */
+export class EducationUpdateStrategy extends BaseSectionUpdateStrategy {
+  canHandle(gap: ResumeGap, userResponse: string, resumeData: Partial<ResumeData>): boolean {
+    return gap.category === 'education';
+  }
+  
+  getUpdatePath(gap: ResumeGap, userResponse: string, resumeData: Partial<ResumeData>): string {
+    // For simplicity, update the first education entry
+    // In a more sophisticated implementation, we could determine the appropriate entry
+    if (resumeData.education && resumeData.education.length > 0) {
+      return 'education[0].fieldOfStudy';
+    }
+    
+    // Fallback to career summary if no education entries exist
+    return 'profile.careerSummary';
+  }
+  
+  formatValue(gap: ResumeGap, userResponse: string, resumeData: Partial<ResumeData>, path: string): any {
+    // Simple format for now - in a real app, this would be more sophisticated
+    return userResponse;
+  }
+}
+
+/**
+ * Strategy for updating achievements section
+ */
+export class AchievementsUpdateStrategy extends BaseSectionUpdateStrategy {
+  canHandle(gap: ResumeGap, userResponse: string, resumeData: Partial<ResumeData>): boolean {
+    return gap.category === 'achievements';
+  }
+  
+  getUpdatePath(gap: ResumeGap, userResponse: string, resumeData: Partial<ResumeData>): string {
+    // In a real resume structure, this might be a dedicated achievements section
+    // For now, we'll add it to the most recent work experience
+    if (resumeData.experience && resumeData.experience.length > 0) {
+      return `experience[0].achievements`;
+    }
+    
+    // Fallback to career summary
+    return 'profile.careerSummary';
+  }
+  
+  formatValue(gap: ResumeGap, userResponse: string, resumeData: Partial<ResumeData>, path: string): any {
+    if (path.endsWith('.achievements')) {
+      // Format as bullet points
+      const bulletPoints = formatExperienceBullets(userResponse);
+      
+      // Get current achievements
+      const currentAchievements = this.getCurrentValue(path, resumeData) || [];
+      
+      // Return combined achievements without duplicates
+      return [...new Set([...currentAchievements, ...bulletPoints])];
+    }
+    
+    // Default format
+    return userResponse;
+  }
+}
+
+/**
+ * Fallback strategy when no specific strategy applies
+ */
+export class FallbackUpdateStrategy extends BaseSectionUpdateStrategy {
+  canHandle(gap: ResumeGap, userResponse: string, resumeData: Partial<ResumeData>): boolean {
+    // Fallback always handles any gap
+    return true;
+  }
+  
+  getUpdatePath(gap: ResumeGap, userResponse: string, resumeData: Partial<ResumeData>): string {
+    // Default to updating the career summary
+    return 'profile.careerSummary';
+  }
+  
+  formatValue(gap: ResumeGap, userResponse: string, resumeData: Partial<ResumeData>, path: string): any {
+    const currentSummary = this.getCurrentValue(path, resumeData);
+    
+    if (currentSummary) {
+      return `${currentSummary}\n\n${userResponse}`;
+    }
+    
+    return userResponse;
+  }
+}
+
+/**
+ * Strategy registry for managing and selecting update strategies
+ */
+export class UpdateStrategyRegistry {
+  private strategies: SectionUpdateStrategy[] = [];
+  
+  constructor() {
+    // Register strategies in priority order (more specific first)
+    this.registerStrategy(new ExperienceUpdateStrategy());
+    this.registerStrategy(new SkillsUpdateStrategy());
+    this.registerStrategy(new SummaryUpdateStrategy());
+    this.registerStrategy(new EducationUpdateStrategy());
+    this.registerStrategy(new AchievementsUpdateStrategy());
+    this.registerStrategy(new FallbackUpdateStrategy()); // Always last
+  }
+  
+  registerStrategy(strategy: SectionUpdateStrategy): void {
+    this.strategies.push(strategy);
+  }
+  
+  /**
+   * Get the appropriate strategy for a given gap and user response
+   */
+  getStrategy(gap: ResumeGap, userResponse: string, resumeData: Partial<ResumeData>): SectionUpdateStrategy {
+    for (const strategy of this.strategies) {
+      if (strategy.canHandle(gap, userResponse, resumeData)) {
+        return strategy;
+      }
+    }
+    
+    // The fallback strategy should always be registered last and always return true for canHandle
+    return this.strategies[this.strategies.length - 1];
+  }
+  
+  /**
+   * Generate a change proposal for a gap and user response
+   */
+  generateChangeProposal(gap: ResumeGap, userResponse: string, resumeData: Partial<ResumeData>) {
+    const strategy = this.getStrategy(gap, userResponse, resumeData);
+    const path = strategy.getUpdatePath(gap, userResponse, resumeData);
+    const oldValue = strategy.getCurrentValue(path, resumeData);
+    const formattedValue = strategy.formatValue(gap, userResponse, resumeData, path);
+    
+    return {
+      path,
+      oldValue,
+      newValue: formattedValue,
+      description: `Update based on gap: ${gap.title}`,
+    };
+  }
+}
+
+// Export a singleton instance of the registry
+export const updateStrategyRegistry = new UpdateStrategyRegistry();
