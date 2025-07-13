@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Arete Resume Builder - Gap Analysis UI</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <style>
+        .gap-item {
+            transition: all 0.3s ease;
+        }
+        .gap-item:hover {
+            transform: translateX(5px);
+        }
+        .progress-bar {
+            transition: width 1s ease-in-out;
+        }
+        .preview-change {
+            background-color: #f3f9ff;
+        }
+        .high-priority {
+            border-left: 4px solid #e53e3e;
+        }
+        .medium-priority {
+            border-left: 4px solid #dd6b20;
+        }
+        .low-priority {
+            border-left: 4px solid #38a169;
+        }
+        .status-addressed {
+            background-color: #f0fff4;
+        }
+        .status-skipped {
+            background-color: #fff5f5;
+            opacity: 0.7;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen">
+    <div class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+        <div class="bg-white shadow overflow-hidden sm:rounded-lg mb-6">
+            <div class="px-4 py-5 sm:px-6 flex justify-between items-center">
+                <div>
+                    <h1 class="text-2xl font-bold text-gray-900">Resume Gap Analysis</h1>
+                    <p class="text-sm text-gray-500">
+                        Address the gaps to improve your resume match for this job
+                    </p>
+                </div>
+                <div class="flex items-center">
+                    <span class="mr-2 text-lg font-bold">Match: 65%</span>
+                    <div class="w-32 h-4 bg-gray-200 rounded">
+                        <div class="progress-bar h-full bg-blue-600 rounded" style="width: 65%"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            <!-- Left Panel: Gap Navigation -->
+            <div class="lg:col-span-4 bg-white shadow overflow-hidden sm:rounded-lg">
+                <div class="px-4 py-5 sm:px-6 border-b border-gray-200">
+                    <h2 class="text-lg font-medium text-gray-900">Identified Gaps (5)</h2>
+                    <p class="text-sm text-gray-500">Click on a gap to address it</p>
+                </div>
+                <div class="divide-y divide-gray-200">
+                    <!-- Gap 1: LangChain Experience -->
+                    <div class="gap-item p-4 high-priority status-addressed cursor-pointer flex items-center">
+                        <div class="flex-1">
+                            <div class="flex justify-between">
+                                <h3 class="text-sm font-medium">1. Missing Experience with LangChain/LlamaIndex</h3>
+                                <span class="px-2 py-1 text-xs rounded-full bg-green-100 text-green-800">Addressed</span>
+                            </div>
+                            <p class="mt-1 text-xs text-gray-500">High Priority - Technical Skills</p>
+                        </div>
+                    </div>
+
+                    <!-- Gap 2: Agent System Experience -->
+                    <div class="gap-item p-4 high-priority cursor-pointer flex items-center bg-blue-50">
+                        <div class="flex-1">
+                            <div class="flex justify-between">
+                                <h3 class="text-sm font-medium">2. Missing Agent System Experience</h3>
+                                <span class="px-2 py-1 text-xs rounded-full bg-blue-100 text-blue-800">In Progress</span>
+                            </div>
+                            <p class="mt-1 text-xs text-gray-500">High Priority - Experience</p>
+                        </div>
+                    </div>
+
+                    <!-- Gap 3: Vector Database Experience -->
+                    <div class="gap-item p-4 medium-priority cursor-pointer flex items-center">
+                        <div class="flex-1">
+                            <div class="flex justify-between">
+                                <h3 class="text-sm font-medium">3. Lack of Vector Database Experience</h3>
+                                <span class="px-2 py-1 text-xs rounded-full bg-gray-100 text-gray-800">Not Started</span>
+                            </div>
+                            <p class="mt-1 text-xs text-gray-500">Medium Priority - Technical Skills</p>
+                        </div>
+                    </div>
+
+                    <!-- Gap 4: API Integration Impact -->
+                    <div class="gap-item p-4 medium-priority cursor-pointer flex items-center">
+                        <div class="flex-1">
+                            <div class="flex justify-between">
+                                <h3 class="text-sm font-medium">4. Quantify API Integration Impact</h3>
+                                <span class="px-2 py-1 text-xs rounded-full bg-gray-100 text-gray-800">Not Started</span>
+                            </div>
+                            <p class="mt-1 text-xs text-gray-500">Medium Priority - Achievements</p>
+                        </div>
+                    </div>
+
+                    <!-- Gap 5: Career Summary -->
+                    <div class="gap-item p-4 low-priority status-skipped cursor-pointer flex items-center">
+                        <div class="flex-1">
+                            <div class="flex justify-between">
+                                <h3 class="text-sm font-medium">5. Refocus Career Summary for AI Focus</h3>
+                                <span class="px-2 py-1 text-xs rounded-full bg-red-100 text-red-800">Skipped</span>
+                            </div>
+                            <p class="mt-1 text-xs text-gray-500">Low Priority - Summary</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="p-4 bg-gray-50 border-t border-gray-200">
+                    <div class="flex justify-between items-center">
+                        <span class="text-sm font-medium">Progress: 2/5 gaps addressed</span>
+                        <div class="w-32 h-2 bg-gray-200 rounded-full overflow-hidden">
+                            <div class="h-full bg-green-500 rounded-full" style="width: 40%"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Panel: Selected Gap & Response -->
+            <div class="lg:col-span-8">
+                <!-- Gap Details -->
+                <div class="bg-white shadow overflow-hidden sm:rounded-lg mb-6">
+                    <div class="px-4 py-5 sm:px-6 border-b border-gray-200 flex justify-between">
+                        <div>
+                            <div class="flex items-center">
+                                <span class="px-2 py-1 mr-2 text-xs rounded-full bg-red-100 text-red-800">High Priority</span>
+                                <h2 class="text-lg font-medium text-gray-900">Gap 2 of 5: Missing Agent System Experience</h2>
+                            </div>
+                            <p class="text-sm text-gray-500">Experience</p>
+                        </div>
+                        <div>
+                            <button class="px-3 py-1 text-sm bg-gray-100 text-gray-700 rounded hover:bg-gray-200">Skip</button>
+                        </div>
+                    </div>
+                    <div class="px-4 py-5 sm:p-6">
+                        <h3 class="text-base font-medium text-gray-900">Job Requirement</h3>
+                        <p class="mt-1 text-sm text-gray-600">
+                            Experience building production agent systems or chatbots at scale
+                        </p>
+                        
+                        <h3 class="mt-4 text-base font-medium text-gray-900">Current Resume</h3>
+                        <p class="mt-1 text-sm text-gray-600">
+                            Your achievements mention architecture improvements and API development, but not
+                            dedicated agent building. Have you built or contributed to any projects involving 
+                            autonomous agents, even small-scale prototypes?
+                        </p>
+                        
+                        <!-- Response Options -->
+                        <div class="mt-6">
+                            <h3 class="text-base font-medium text-gray-900">How would you like to address this gap?</h3>
+                            <div class="mt-3 flex space-x-4">
+                                <button class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                                    I have relevant experience
+                                </button>
+                                <button class="px-4 py-2 bg-blue-100 text-blue-700 rounded hover:bg-blue-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                                    I have similar experience
+                                </button>
+                                <button class="px-4 py-2 bg-gray-100 text-gray-700 rounded hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500">
+                                    I don't have this experience
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <!-- Response Form (displayed when user selects an option) -->
+                        <div class="mt-6 border border-gray-200 rounded-md p-4">
+                            <h3 class="text-base font-medium text-gray-900 mb-3">Describe Your Agent Development Experience</h3>
+                            
+                            <div class="grid grid-cols-1 gap-4">
+                                <!-- Company/Project Field -->
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700">Company or Project</label>
+                                    <select class="mt-1 block w-full py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                                        <option>TechGenius Corp</option>
+                                        <option>Innovatech Solutions Inc</option>
+                                        <option>Personal Project</option>
+                                        <option>Other</option>
+                                    </select>
+                                </div>
+                                
+                                <!-- Smart Template with Guided Fields -->
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700">Description (Start with an action verb)</label>
+                                    <textarea rows="3" class="mt-1 block w-full py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm" placeholder="Developed an autonomous agent that..."></textarea>
+                                </div>
+                                
+                                <!-- Metrics Fields -->
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700">Metrics & Impact</label>
+                                    <div class="grid grid-cols-2 gap-4 mt-1">
+                                        <input type="text" placeholder="Users/Scale" class="block w-full py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                                        <input type="text" placeholder="Performance/Results" class="block w-full py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                                    </div>
+                                </div>
+                                
+                                <!-- Technologies Used -->
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700">Technologies Used</label>
+                                    <div class="mt-1 flex flex-wrap gap-2">
+                                        <span class="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm">LangChain</span>
+                                        <span class="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm">LlamaIndex</span>
+                                        <span class="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm">GPT-4</span>
+                                        <span class="px-3 py-1 bg-gray-100 text-gray-800 rounded-full text-sm">+ Add</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Preview Section -->
+                        <div class="mt-6 border border-gray-200 rounded-md overflow-hidden">
+                            <div class="px-4 py-3 bg-gray-50 border-b border-gray-200 flex justify-between items-center">
+                                <h3 class="text-base font-medium text-gray-900">Resume Update Preview</h3>
+                                <div>
+                                    <button class="px-3 py-1 text-xs bg-gray-200 text-gray-700 rounded hover:bg-gray-300">Edit</button>
+                                </div>
+                            </div>
+                            <div class="p-4">
+                                <div class="grid grid-cols-2 gap-6">
+                                    <div>
+                                        <h4 class="text-sm font-medium text-gray-700 mb-2">Current Experience</h4>
+                                        <div class="p-3 bg-gray-50 rounded text-sm">
+                                            <p class="font-medium">Software Engineer</p>
+                                            <p class="text-gray-500">TechGenius Corp · Austin, TX</p>
+                                            <p class="text-gray-500 text-xs">2018-01 - 2021-05</p>
+                                            <ul class="mt-2 text-sm list-disc pl-5 space-y-1">
+                                                <li>Developed and maintained full-stack features for a high-traffic e-commerce platform using React.js and Node.js.</li>
+                                                <li>Implemented a new RESTful API for third-party integrations, expanding the platform's functionality and partner ecosystem.</li>
+                                                <li>Wrote unit and integration tests using Jest and Mocha, achieving 90% code coverage and improving application stability.</li>
+                                                <li>Optimized database queries and application performance, leading to a 30% increase in page load speeds.</li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <h4 class="text-sm font-medium text-gray-700 mb-2">Updated Experience</h4>
+                                        <div class="p-3 bg-white border border-gray-200 rounded text-sm">
+                                            <p class="font-medium">Software Engineer</p>
+                                            <p class="text-gray-500">TechGenius Corp · Austin, TX</p>
+                                            <p class="text-gray-500 text-xs">2018-01 - 2021-05</p>
+                                            <ul class="mt-2 text-sm list-disc pl-5 space-y-1">
+                                                <li>Developed and maintained full-stack features for a high-traffic e-commerce platform using React.js and Node.js.</li>
+                                                <li>Implemented a new RESTful API for third-party integrations, expanding the platform's functionality and partner ecosystem.</li>
+                                                <li>Wrote unit and integration tests using Jest and Mocha, achieving 90% code coverage and improving application stability.</li>
+                                                <li>Optimized database queries and application performance, leading to a 30% increase in page load speeds.</li>
+                                                <li class="preview-change font-medium">Developed an autonomous customer service agent using LangChain and GPT-4, handling 10,000+ daily customer inquiries with 85% resolution rate without human intervention.</li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Action Buttons -->
+                        <div class="mt-6 flex justify-end space-x-3">
+                            <button class="px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 rounded focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                                Cancel
+                            </button>
+                            <button class="px-4 py-2 border border-transparent bg-blue-600 text-sm font-medium text-white hover:bg-blue-700 rounded focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                                Apply Update
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Navigation Buttons -->
+                <div class="flex justify-between">
+                    <button class="inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 rounded focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                        <svg class="mr-2 h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M9.707 14.707a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 1.414L7.414 9H15a1 1 0 110 2H7.414l2.293 2.293a1 1 0 010 1.414z" clip-rule="evenodd" />
+                        </svg>
+                        Previous Gap
+                    </button>
+                    <button class="inline-flex items-center px-4 py-2 border border-transparent bg-blue-600 text-sm font-medium text-white hover:bg-blue-700 rounded focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                        Next Gap
+                        <svg class="ml-2 h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M10.293 5.293a1 1 0 011.414 0l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414-1.414L12.586 11H5a1 1 0 110-2h7.586l-2.293-2.293a1 1 0 010-1.414z" clip-rule="evenodd" />
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Bottom Actions -->
+        <div class="mt-6 bg-white shadow overflow-hidden sm:rounded-lg">
+            <div class="px-4 py-5 sm:p-6 flex justify-between items-center">
+                <div>
+                    <span class="text-sm font-medium">Resume Match: 65% → 78%</span>
+                    <div class="w-64 h-2 bg-gray-200 rounded-full overflow-hidden mt-1">
+                        <div class="h-full bg-green-500 rounded-full" style="width: 78%"></div>
+                    </div>
+                </div>
+                <div class="space-x-3">
+                    <button class="px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 rounded focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                        Save Progress
+                    </button>
+                    <button class="px-4 py-2 border border-transparent bg-blue-600 text-sm font-medium text-white hover:bg-blue-700 rounded focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                        Finalize Resume
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
