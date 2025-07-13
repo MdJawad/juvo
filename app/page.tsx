@@ -7,6 +7,7 @@ import { useInterview } from '@/app/hooks/useInterview';
 import { Bot } from 'lucide-react';
 import { ResumeUploader } from './components/ResumeUploader';
 import JobDescriptionModal from './components/JobDescriptionModal';
+import { GapAnalysis } from './components/ui';
 
 export default function Home() {
   const {
@@ -31,6 +32,9 @@ export default function Home() {
     proposedChange,
     acceptChange,
     rejectChange,
+    gapAnalysis,
+    isTailoringMode,
+    currentGapIndex,
   } = useInterview();
 
   // The main interview UI for the 'chat' view
@@ -46,7 +50,8 @@ export default function Home() {
       </div>
 
       {/* Right Column: Combined Interview and Preview Panel */}
-      <div className="lg:col-span-8 xl:col-span-9">
+      <div className="lg:col-span-8 xl:col-span-9 flex flex-col gap-4">
+        {isTailoringMode && <GapAnalysis gapAnalysis={gapAnalysis} />}
         <InterviewPanel
           messages={messages}
           input={input}
@@ -57,6 +62,7 @@ export default function Home() {
           proposedChange={proposedChange}
           acceptChange={acceptChange}
           rejectChange={rejectChange}
+          currentGap={gapAnalysis && currentGapIndex !== null ? gapAnalysis.gaps[currentGapIndex] : null}
         />
       </div>
     </div>

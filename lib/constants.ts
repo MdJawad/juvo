@@ -52,13 +52,28 @@ You: "I see from your resume that you worked at Acme Corp as a Senior Gizmo Engi
 Do not start the conversation. Wait for the user's first message. Your first response should be the introduction.
 `;
 
-export const INTERVIEW_FLOW: ReadonlyArray<string> = [
-  'profile',
-  'experience',
-  'education',
-  'skills',
-  'review',
-];
+export const INTERVIEW_FLOW = [
+  {
+    id: 'profile',
+    initialQuestion: "Hello! I'm Arete, your expert career counselor. I'm here to guide you in building an exceptional resume. Let's start with your basic information. What is your full name?",
+  },
+  {
+    id: 'experience',
+    initialQuestion: "Great, let's move on to your work experience. Please tell me about your most recent job.",
+  },
+  {
+    id: 'education',
+    initialQuestion: "Thanks for sharing your experience. Now, let's add your educational background. What is your most recent degree or certification?",
+  },
+  {
+    id: 'skills',
+    initialQuestion: 'What are some of your key technical and soft skills?',
+  },
+  {
+    id: 'review',
+    initialQuestion: "We've completed the main sections of your resume. Please review the information, and let me know if you'd like to make any changes.",
+  }
+] as const;
 
 // System prompt for the AI resume parser that processes extracted text from PDF uploads
 export const RESUME_PARSER_PROMPT = `
@@ -117,7 +132,7 @@ For dates, use standardized formats like "YYYY-MM" or just "YYYY" if specific mo
 `;
 
 export const TAILORING_PROMPT = `
-You are an expert career coach and resume strategist. Your task is to analyze a user's resume in JSON format and a job description they are targeting. Your goal is to provide specific, actionable suggestions to tailor the resume for the job.
+You are an expert career coach and resume strategist. Your task is to analyze a user's resume in JSON format and a job description they are targeting. Your goal is to identify gaps and opportunities to tailor the resume for the job.
 
 **Input:**
 1.  **Resume Data (JSON):** The user's current resume.
@@ -130,13 +145,61 @@ You are an expert career coach and resume strategist. Your task is to analyze a 
 4.  **Identify Strengths:** Find existing skills and experiences on the resume that are a strong match for the job.
 
 **Output Format:**
-Return ONLY a JSON object with a single key, "suggestions", which is an array of strings. Each string should be a concise, actionable suggestion. Frame the suggestions as if you are speaking directly to the user.
+Return ONLY a JSON object with the following structure:
 
-**Example Suggestions:**
-- "The job requires experience with 'Data Visualization'. Consider adding projects or skills related to tools like Tableau or Power BI."
-- "Your bullet point 'Managed a team' is good, but you can make it stronger by adding a metric. For example: 'Managed a team of 5 engineers to deliver the project 2 weeks ahead of schedule.'"
-- "The job description emphasizes 'cross-functional collaboration.' Your resume mentions working with engineering. Let's rephrase a bullet point to also include your work with the product and design teams to better match this."
-- "Your experience with 'Node.js' is a great match for this role. I recommend moving it higher up in your skills list."
+{
+  "gaps": [
+    {
+      "id": "unique-id-1",
+      "category": "technical_skills", // One of: technical_skills, soft_skills, experience, education, achievements, summary
+      "priority": 1, // 1 (highest) to 3 (lowest)
+      "title": "Missing Data Visualization Skills",
+      "description": "The job requires experience with data visualization tools, but none are mentioned in your resume.",
+      "jobRequirement": "Experience with data visualization tools like Tableau or Power BI",
+      "currentResumeState": "No mention of data visualization tools in skills or experience",
+      "suggestedQuestion": "Do you have any experience with data visualization tools like Tableau or Power BI that we could add to your resume?"
+    },
+    {
+      "id": "unique-id-2",
+      "category": "achievements",
+      "priority": 2,
+      "title": "Quantify Team Management Experience",
+      "description": "Your bullet point about team management could be strengthened with specific metrics.",
+      "jobRequirement": "Experience managing cross-functional teams",
+      "currentResumeState": "'Managed a team to deliver project results'",
+      "suggestedQuestion": "How many people did you manage in this role, and what specific results did your team achieve?"
+    }
+  ],
+  "summary": {
+    "totalGaps": 2,
+    "priorityBreakdown": {
+      "high": 1,
+      "medium": 1,
+      "low": 0
+    },
+    "categoryBreakdown": {
+      "technical_skills": 1,
+      "achievements": 1
+    },
+    "overallMatch": 70 // Percentage match between resume and job description (0-100)
+  }
+}
 
-**IMPORTANT:** Do not generate more than 5 suggestions. Focus on the most impactful changes.
+**Guidelines for Gap Identification:**
+
+1. **Technical Skills Gaps:** Identify specific technical skills mentioned in the job description that are missing from the resume.
+
+2. **Soft Skills Gaps:** Identify soft skills (communication, leadership, etc.) emphasized in the job description but not highlighted in the resume.
+
+3. **Experience Gaps:** Identify specific types of experience required by the job that aren't clearly demonstrated in the resume.
+
+4. **Achievement Gaps:** Identify achievements that could be better quantified or areas where metrics could be added.
+
+5. **Summary Gaps:** Identify opportunities to better align the professional summary with the job requirements.
+
+**IMPORTANT:** 
+- Generate between 3-7 gaps, focusing on the most impactful areas for improvement.
+- Prioritize gaps (1=high, 2=medium, 3=low) based on their importance to the job requirements.
+- For each gap, create a specific, targeted question that will help gather the information needed to address the gap.
+- Ensure each gap has a unique ID.
 `;

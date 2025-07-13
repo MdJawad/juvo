@@ -11,6 +11,39 @@ export interface Message {
 }
 
 /**
+ * Represents a gap identified in the resume compared to a job description.
+ */
+export interface ResumeGap {
+  id: string;
+  category: 'technical_skills' | 'soft_skills' | 'experience' | 'education' | 'achievements' | 'summary';
+  priority: 1 | 2 | 3; // 1=high, 2=medium, 3=low
+  title: string;
+  description: string;
+  jobRequirement: string;
+  currentResumeState: string;
+  suggestedQuestion: string;
+  isAddressed?: boolean; // Whether the user has addressed this gap
+  userResponse?: string; // The user's response to the gap
+}
+
+/**
+ * Represents the result of a gap analysis between a resume and job description.
+ */
+export interface GapAnalysisResult {
+  gaps: ResumeGap[];
+  summary: {
+    totalGaps: number;
+    priorityBreakdown: {
+      high: number;
+      medium: number;
+      low: number;
+    };
+    categoryBreakdown: Record<string, number>;
+    overallMatch: number;
+  };
+}
+
+/**
  * Defines the user's personal and contact information.
  */
 export interface UserProfile {
@@ -77,6 +110,10 @@ export interface ConversationState {
   progress: number; // Percentage (0-100)
   history: Message[];
   resumeData: Partial<ResumeData>;
+  gapAnalysis?: GapAnalysisResult; // Result of comparing resume to job description
+  currentGapIndex?: number; // Index of the gap currently being addressed
+  tailoringJobDescription?: string; // The job description being used for tailoring
+  isTailoringMode?: boolean; // Whether the interview is in tailoring mode
 }
 
 /**

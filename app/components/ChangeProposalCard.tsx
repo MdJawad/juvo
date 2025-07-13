@@ -8,6 +8,32 @@ interface ChangeProposalCardProps {
 }
 
 export function ChangeProposalCard({ proposal, onAccept, onReject }: ChangeProposalCardProps) {
+
+  const renderValue = (value: any) => {
+    if (typeof value !== 'string') {
+      return <p>{JSON.stringify(value)}</p>;
+    }
+    try {
+      const parsed = JSON.parse(value);
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        return (
+          <ul className="list-disc list-inside pl-2">
+            {parsed.map((item, index) => (
+              <li key={index} className="text-sm">{item}</li>
+            ))}
+          </ul>
+        );
+      }
+      if (Array.isArray(parsed) && parsed.length === 0) {
+        return <p className="text-sm italic text-gray-500">No items.</p>
+      }
+    } catch (e) {
+      // Not a JSON string, just return it
+    }
+    return <p className="text-sm">{value || <span className="italic text-gray-500">No content.</span>}</p>;
+  };
+
+
   return (
     <div className="bg-yellow-50 border-2 border-yellow-300 rounded-lg p-4 my-4 shadow-md">
       <div className="flex items-start">
@@ -19,6 +45,22 @@ export function ChangeProposalCard({ proposal, onAccept, onReject }: ChangePropo
           <div className="mt-2 text-sm text-yellow-700">
             <p>{proposal.description}</p>
           </div>
+          
+          <div className="mt-4 space-y-2 p-3 bg-white border border-gray-200 rounded-md">
+            <div>
+              <h4 className="text-xs font-bold text-gray-500 uppercase tracking-wider">Before</h4>
+              <div className="mt-1 p-2 bg-red-50 text-red-900 rounded-md">
+                {renderValue(proposal.oldValue)}
+              </div>
+            </div>
+            <div>
+              <h4 className="text-xs font-bold text-gray-500 uppercase tracking-wider">After</h4>
+              <div className="mt-1 p-2 bg-green-50 text-green-900 rounded-md">
+                {renderValue(proposal.newValue)}
+              </div>
+            </div>
+          </div>
+
         </div>
       </div>
       <div className="mt-4 flex justify-end space-x-3">
