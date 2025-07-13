@@ -7,7 +7,7 @@ import { useInterview } from '@/app/hooks/useInterview';
 import { Bot } from 'lucide-react';
 import { ResumeUploader } from './components/ResumeUploader';
 import JobDescriptionModal from './components/JobDescriptionModal';
-import { GapAnalysis } from './components/ui';
+import { GapAnalysisPanel } from './components/GapAnalysis';
 
 export default function Home() {
   const {
@@ -51,19 +51,20 @@ export default function Home() {
 
       {/* Right Column: Combined Interview and Preview Panel */}
       <div className="lg:col-span-8 xl:col-span-9 flex flex-col gap-4">
-        {isTailoringMode && <GapAnalysis gapAnalysis={gapAnalysis} />}
-        <InterviewPanel
-          messages={messages}
-          input={input}
-          handleInputChange={handleInputChange}
-          handleSubmit={handleSubmit}
-          isLoading={isLoading}
-          resumeData={resumeData}
-          proposedChange={proposedChange}
-          acceptChange={acceptChange}
-          rejectChange={rejectChange}
-          currentGap={gapAnalysis && currentGapIndex !== null ? gapAnalysis.gaps[currentGapIndex] : null}
-        />
+        {!isTailoringMode && (
+          <InterviewPanel
+            messages={messages}
+            input={input}
+            handleInputChange={handleInputChange}
+            handleSubmit={handleSubmit}
+            isLoading={isLoading}
+            resumeData={resumeData}
+            proposedChange={proposedChange}
+            acceptChange={acceptChange}
+            rejectChange={rejectChange}
+            currentGap={null}
+          />
+        )}
       </div>
     </div>
   );
@@ -137,7 +138,22 @@ export default function Home() {
           </div>
         </header>
 
-        {interviewStarted ? (viewMode === 'hub' ? hubUI : chatUI) : selectionScreen}
+        {!interviewStarted && selectionScreen}
+        {interviewStarted && viewMode === 'hub' && !isTailoringMode && hubUI}
+        {interviewStarted && viewMode === 'chat' && !isTailoringMode && chatUI}
+        {interviewStarted && isTailoringMode && gapAnalysis && (
+          <GapAnalysisPanel
+            gapAnalysis={gapAnalysis}
+            resumeData={resumeData}
+            onChangeAccepted={acceptChange}
+            onComplete={() => {
+              // Return to hub view when complete
+              // We don't have direct access to state setters, so we'll use the helpers provided by useInterview
+              // First disable tailoring mode and then return to hub view
+              onCompleteTailoring();
+            }}
+          />
+        )}
 
         <JobDescriptionModal
           isOpen={isTailorModalOpen}

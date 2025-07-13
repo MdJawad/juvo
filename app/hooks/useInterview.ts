@@ -326,6 +326,12 @@ export function useInterview() {
       setIsUploading(false);
     }
   }, [setMessages]);
+  
+  // Function to complete the tailoring process and return to hub view
+  const onCompleteTailoring = useCallback(() => {
+    setIsTailoringMode(false);
+    setViewMode('hub');
+  }, []);
 
   return {
     messages: filteredMessages,
@@ -353,5 +359,6 @@ export function useInterview() {
     currentGapIndex,
     isTailoringMode,
     isGapAnalysisComplete,
+    onCompleteTailoring,
   };
 }
