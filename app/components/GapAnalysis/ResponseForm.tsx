@@ -151,14 +151,10 @@ export const ResponseForm: React.FC<ResponseFormProps> = ({
             rows={3} 
             className="mt-1 block w-full py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
             placeholder={getPlaceholderText()}
-            value={responseType === 'none' ? value : value.replace(`At ${selectedCompany}, I `, '')}
+            value={value}
             onChange={(e) => {
-              let newValue = e.target.value;
-              if (responseType !== 'none' && selectedCompany) {
-                // Don't include the company prefix in the stored value
-                newValue = newValue;
-              }
-              onChange(newValue);
+              // Simply pass the raw input value to parent component
+              onChange(e.target.value);
             }}
           ></textarea>
         </div>
