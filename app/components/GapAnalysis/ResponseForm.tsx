@@ -242,7 +242,9 @@ export const ResponseForm: React.FC<ResponseFormProps> = ({
           <button
             type="button"
             onClick={() => {
-              console.log('Submit button clicked in ResponseForm');
+              const combinedNow = combineFormData();
+              // Ensure parent gets the latest combined response synchronously
+              onChange(combinedNow);
               onSubmit();
             }}
             className="px-4 py-2 border border-transparent bg-blue-600 text-sm font-medium text-white hover:bg-blue-700 rounded focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"

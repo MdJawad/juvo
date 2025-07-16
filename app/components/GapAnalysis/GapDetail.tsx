@@ -37,7 +37,12 @@ export const GapDetail: React.FC<GapDetailProps> = ({
   const [selectedResponseType, setSelectedResponseType] = useState<ResponseType>(null);
   const [response, setResponse] = useState('');
   const [showPreview, setShowPreview] = useState(false);
-  
+
+  // Show preview automatically when a new change proposal arrives
+  useEffect(() => {
+    setShowPreview(!!proposedChange);
+  }, [proposedChange]);
+
   // Reset state when gap changes
   useEffect(() => {
     setSelectedResponseType(null);
@@ -58,8 +63,7 @@ export const GapDetail: React.FC<GapDetailProps> = ({
     if (selectedResponseType && response.trim()) {
       console.log('Calling onSubmitResponse');
       onSubmitResponse(response, selectedResponseType);
-      console.log('Setting showPreview to true');
-      setShowPreview(true);
+      // Preview will be shown once `proposedChange` prop updates from parent
     } else {
       console.log('Validation failed:', { selectedResponseType, responseLength: response.trim().length });
     }
