@@ -12,11 +12,25 @@
   --font-mono: var(--font-geist-mono);
 }
 
+/* Disabling dark mode styling to ensure consistent appearance */
+/*
 @media (prefers-color-scheme: dark) {
   :root {
     --background: #0a0a0a;
     --foreground: #ededed;
   }
+}
+*/
+
+/* Ensure form fields are always visible regardless of browser mode */
+input, textarea, select {
+  background-color: #ffffff !important;
+  color: #171717 !important;
+  border-color: #d1d5db !important;
+}
+
+input::placeholder, textarea::placeholder {
+  color: #6b7280 !important;
 }
 
 body {
