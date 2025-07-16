@@ -51,9 +51,17 @@ export const GapDetail: React.FC<GapDetailProps> = ({
   };
   
   const handleResponseSubmit = () => {
+    console.log('Submit button clicked');
+    console.log('Response type:', selectedResponseType);
+    console.log('Response content:', response);
+    
     if (selectedResponseType && response.trim()) {
+      console.log('Calling onSubmitResponse');
       onSubmitResponse(response, selectedResponseType);
+      console.log('Setting showPreview to true');
       setShowPreview(true);
+    } else {
+      console.log('Validation failed:', { selectedResponseType, responseLength: response.trim().length });
     }
   };
   

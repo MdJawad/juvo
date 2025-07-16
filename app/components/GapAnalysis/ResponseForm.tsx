@@ -38,6 +38,13 @@ export const ResponseForm: React.FC<ResponseFormProps> = ({
   
   // Function to combine form data into a structured response
   const combineFormData = () => {
+    console.log('Combining form data');
+    console.log('Response type:', responseType);
+    console.log('Selected company:', selectedCompany);
+    console.log('Raw input value:', rawInputValue);
+    console.log('Metrics:', metrics);
+    console.log('Technologies:', technologies);
+    
     let combinedResponse = '';
     
     if (responseType === 'relevant' || responseType === 'similar') {
@@ -63,6 +70,7 @@ export const ResponseForm: React.FC<ResponseFormProps> = ({
       combinedResponse = value;
     }
     
+    console.log('Combined response:', combinedResponse);
     return combinedResponse;
   };
   
@@ -233,7 +241,10 @@ export const ResponseForm: React.FC<ResponseFormProps> = ({
         <div className="flex justify-end mt-2">
           <button
             type="button"
-            onClick={onSubmit}
+            onClick={() => {
+              console.log('Submit button clicked in ResponseForm');
+              onSubmit();
+            }}
             className="px-4 py-2 border border-transparent bg-blue-600 text-sm font-medium text-white hover:bg-blue-700 rounded focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
           >
             Submit Response

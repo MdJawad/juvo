@@ -71,8 +71,14 @@ export const GapAnalysisPanel: React.FC<GapAnalysisPanelProps> = ({
   };
   
   const handleSubmitResponse = (response: string, responseType: 'relevant' | 'similar' | 'none') => {
+    console.log('handleSubmitResponse called in GapAnalysisPanel');
+    console.log('Response:', response);
+    console.log('Response type:', responseType);
+    console.log('Current gap:', currentGap);
+    
     // For "I don't have experience" responses, handle differently
     if (responseType === 'none') {
+      console.log('Handling "none" response type');
       // Simply mark the gap as addressed without generating a change
       const newAddressed = new Set(addressedGaps);
       newAddressed.add(currentGap.id);
@@ -80,22 +86,30 @@ export const GapAnalysisPanel: React.FC<GapAnalysisPanelProps> = ({
       
       // Move to next gap or complete
       if (isLastGap) {
+        console.log('Last gap, calling onComplete');
         onComplete();
       } else {
+        console.log('Moving to next gap');
         setCurrentGapIndex(currentGapIndex + 1);
       }
       
       return;
     }
     
+    console.log('Generating change proposal for response type:', responseType);
     // For relevant/similar experience, generate a change proposal
-    const proposal = updateStrategyRegistry.generateChangeProposal(
-      currentGap,
-      response,
-      resumeData
-    );
-    
-    setProposedChange(proposal);
+    try {
+      const proposal = updateStrategyRegistry.generateChangeProposal(
+        currentGap,
+        response,
+        resumeData
+      );
+      
+      console.log('Generated proposal:', proposal);
+      setProposedChange(proposal);
+    } catch (error) {
+      console.error('Error generating change proposal:', error);
+    }
   };
   
   const handleAcceptChange = () => {

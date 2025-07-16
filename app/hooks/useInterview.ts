@@ -61,15 +61,20 @@ export function useInterview() {
     }
   }, []);
 
+  // Generate the very first assistant welcome message only once to keep the
+  // `initialMessages` prop reference stable and avoid triggering the
+  // `useStableValue` internal state loop inside `ai/react`.
+  const initialAssistantMessages = useMemo(() => [
+    {
+      id: uuidv4(),
+      role: 'assistant' as const,
+      content: 'Welcome to Arete! Upload your resume or build one from scratch to get started.',
+    },
+  ], []);
+
   const { messages, setMessages, append, input, handleInputChange, handleSubmit, isLoading: isChatLoading } = useChat({
     api: '/api/chat',
-    initialMessages: [
-      {
-        id: uuidv4(),
-        role: 'assistant',
-        content: 'Welcome to Arete! Upload your resume or build one from scratch to get started.',
-      },
-    ],
+    initialMessages: initialAssistantMessages,
     onFinish: (message) => {
       parseAndMergeData(message.content);
     },
@@ -93,6 +98,9 @@ export function useInterview() {
     setMessages(prevMessages => [...prevMessages, message]);
   }, [gapAnalysis, currentGapIndex, setMessages]);
 
+  // Track the last gap index that was presented to avoid presenting the same gap repeatedly
+  const lastPresentedGapIndex = useRef<number | null>(null);
+
   const moveToNextGap = useCallback(() => {
     if (!gapAnalysis) return;
     const nextIndex = currentGapIndex + 1;
@@ -105,8 +113,15 @@ export function useInterview() {
   }, [gapAnalysis, currentGapIndex, setMessages]);
 
   useEffect(() => {
-    if (isTailoringMode && gapAnalysis && !isGapAnalysisComplete && currentGapIndex < gapAnalysis.gaps.length) {
+    if (
+      isTailoringMode &&
+      gapAnalysis &&
+      !isGapAnalysisComplete &&
+      currentGapIndex < gapAnalysis.gaps.length &&
+      lastPresentedGapIndex.current !== currentGapIndex
+    ) {
       presentCurrentGap();
+      lastPresentedGapIndex.current = currentGapIndex;
     }
   }, [isTailoringMode, gapAnalysis, isGapAnalysisComplete, currentGapIndex, presentCurrentGap]);
 
