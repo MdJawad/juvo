@@ -55,17 +55,9 @@ export const GapDetail: React.FC<GapDetailProps> = ({
     setShowPreview(false);
   };
   
-  const handleResponseSubmit = () => {
-    console.log('Submit button clicked');
-    console.log('Response type:', selectedResponseType);
-    console.log('Response content:', response);
-    
-    if (selectedResponseType && response.trim()) {
-      console.log('Calling onSubmitResponse');
-      onSubmitResponse(response, selectedResponseType);
-      // Preview will be shown once `proposedChange` prop updates from parent
-    } else {
-      console.log('Validation failed:', { selectedResponseType, responseLength: response.trim().length });
+  const handleResponseSubmit = (combined: string) => {
+    if (selectedResponseType) {
+      onSubmitResponse(combined, selectedResponseType);
     }
   };
   
