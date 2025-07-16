@@ -65,7 +65,7 @@ export const ResumePreview: React.FC<ResumePreviewProps> = ({
             return (
               <li 
                 key={idx} 
-                className={isNew ? "bg-blue-50 font-medium" : ""}
+                className={isNew ? "bg-blue-50 dark:bg-blue-800 font-medium dark:text-white" : ""}
               >
                 {item}
               </li>
@@ -84,11 +84,11 @@ export const ResumePreview: React.FC<ResumePreviewProps> = ({
 
   return (
     <div className="mt-6 border border-gray-200 rounded-md overflow-hidden">
-      <div className="px-4 py-3 bg-gray-50 border-b border-gray-200 flex justify-between items-center">
-        <h3 className="text-base font-medium text-gray-900">Resume Update Preview</h3>
+      <div className="px-4 py-3 bg-gray-50 dark:bg-gray-700 border-b border-gray-200 dark:border-gray-600 flex justify-between items-center">
+        <h3 className="text-base font-medium text-gray-900 dark:text-white">Resume Update Preview</h3>
         <div>
           <button 
-            className="px-3 py-1 text-xs bg-gray-200 text-gray-700 rounded hover:bg-gray-300"
+            className="px-3 py-1 text-xs bg-gray-200 text-gray-700 dark:bg-gray-600 dark:text-gray-200 rounded hover:bg-gray-300 dark:hover:bg-gray-500"
             onClick={() => {/* Could add edit functionality here */}}
           >
             Edit
@@ -98,18 +98,18 @@ export const ResumePreview: React.FC<ResumePreviewProps> = ({
       <div className="p-4">
         <div className="grid grid-cols-2 gap-6">
           <div>
-            <h4 className="text-sm font-medium text-gray-700 mb-2">
+            <h4 className="text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
               Current {getSectionTitle(proposedChange.path)}
             </h4>
-            <div className="p-3 bg-gray-50 rounded text-sm">
+            <div className="p-3 bg-gray-50 dark:bg-gray-700 dark:text-gray-100 rounded text-sm">
               {formatCurrentValue(proposedChange.oldValue)}
             </div>
           </div>
           <div>
-            <h4 className="text-sm font-medium text-gray-700 mb-2">
+            <h4 className="text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
               Updated {getSectionTitle(proposedChange.path)}
             </h4>
-            <div className="p-3 bg-white border border-gray-200 rounded text-sm">
+            <div className="p-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded text-sm dark:text-gray-100">
               {formatNewValue(proposedChange.oldValue, proposedChange.newValue)}
             </div>
           </div>
@@ -117,7 +117,7 @@ export const ResumePreview: React.FC<ResumePreviewProps> = ({
         
         <div className="mt-6 flex justify-end space-x-3">
           <button 
-            className="px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 rounded focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+            className="px-4 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-600 rounded focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
             onClick={onReject}
           >
             Reject
