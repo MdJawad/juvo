@@ -19,6 +19,7 @@ export const ResponseForm: React.FC<ResponseFormProps> = ({
   onSubmit
 }) => {
   const [selectedCompany, setSelectedCompany] = useState<string>('');
+  const [rawInputValue, setRawInputValue] = useState<string>('');
   const [technologies, setTechnologies] = useState<string[]>([]);
   const [newTech, setNewTech] = useState<string>('');
   const [metrics, setMetrics] = useState<{[key: string]: string}>({
@@ -65,11 +66,12 @@ export const ResponseForm: React.FC<ResponseFormProps> = ({
     return combinedResponse;
   };
   
-  // Update the combined response when form fields change
+  // Update the combined response when relevant fields change
   useEffect(() => {
     const combined = combineFormData();
     onChange(combined);
-  }, [selectedCompany, value, metrics, technologies]);
+    // Don't include selectedCompany in the dependency array to prevent infinite loops
+  }, [rawInputValue, metrics, technologies, responseType]);
   
   // Add a new technology to the list
   const handleAddTechnology = () => {
@@ -151,10 +153,10 @@ export const ResponseForm: React.FC<ResponseFormProps> = ({
             rows={3} 
             className="mt-1 block w-full py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
             placeholder={getPlaceholderText()}
-            value={value}
+            value={rawInputValue}
             onChange={(e) => {
-              // Simply pass the raw input value to parent component
-              onChange(e.target.value);
+              // Store the raw input value locally
+              setRawInputValue(e.target.value);
             }}
           ></textarea>
         </div>

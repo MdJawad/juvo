@@ -61,14 +61,14 @@ const getGapItemClass = (
   addressedGaps: Set<string>, 
   skippedGaps: Set<string>
 ): string => {
-  let className = "gap-item p-4 cursor-pointer flex items-center transition-all hover:translate-x-1";
+  let className = "gap-item p-4 cursor-pointer flex items-center transition-all hover:translate-x-1 hover:shadow-md hover:bg-blue-50 border border-transparent";
   
   if (isActive) {
-    className += " bg-blue-50";
+    className += " bg-blue-50 border-blue-300";
   } else if (addressedGaps.has(gapId)) {
-    className += " bg-green-50 opacity-90";
+    className += " bg-green-50 opacity-90 hover:bg-green-100";
   } else if (skippedGaps.has(gapId)) {
-    className += " bg-gray-50 opacity-70";
+    className += " bg-gray-50 opacity-70 hover:bg-gray-100";
   }
   
   return className;
@@ -91,7 +91,12 @@ export const GapList: React.FC<GapListProps> = ({
         <h2 className="text-lg font-medium text-gray-900">
           Identified Gaps ({totalGaps})
         </h2>
-        <p className="text-sm text-gray-500">Click on a gap to address it</p>
+        <p className="text-sm text-gray-500 flex items-center">
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+          </svg>
+          <span className="font-medium">Click on any gap to address it</span>
+        </p>
       </div>
       
       <div className="divide-y divide-gray-200 overflow-y-auto flex-grow">
@@ -100,6 +105,8 @@ export const GapList: React.FC<GapListProps> = ({
             key={gap.id}
             className={`${getGapItemClass(gap.id, index === currentGapIndex, addressedGaps, skippedGaps)} ${getPriorityClass(gap.priority)}`}
             onClick={() => onSelectGap(index)}
+            role="button"
+            aria-label={`Select gap: ${gap.title}`}
           >
             <div className="flex-1">
               <div className="flex justify-between">

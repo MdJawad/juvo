@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ResumeGap, ResumeData, ChangeProposal } from '@/lib/types';
 import { ResponseForm } from './ResponseForm';
 import { ResumePreview } from './ResumePreview';
@@ -38,6 +38,13 @@ export const GapDetail: React.FC<GapDetailProps> = ({
   const [response, setResponse] = useState('');
   const [showPreview, setShowPreview] = useState(false);
   
+  // Reset state when gap changes
+  useEffect(() => {
+    setSelectedResponseType(null);
+    setResponse('');
+    setShowPreview(false);
+  }, [gap.id]); // Reset when gap.id changes
+  
   const handleResponseTypeSelect = (type: ResponseType) => {
     setSelectedResponseType(type);
     setShowPreview(false);
@@ -55,7 +62,7 @@ export const GapDetail: React.FC<GapDetailProps> = ({
   
   return (
     <div className="bg-white shadow overflow-hidden sm:rounded-lg mb-6">
-      <div className="px-4 py-5 sm:px-6 border-b border-gray-200 flex justify-between">
+      <div className="px-4 py-5 sm:px-6 border-b border-gray-200 flex justify-between items-center">
         <div>
           <div className="flex items-center">
             <span className={`px-2 py-1 mr-2 text-xs rounded-full ${
@@ -71,7 +78,17 @@ export const GapDetail: React.FC<GapDetailProps> = ({
           </div>
           <p className="text-sm text-gray-500">{categoryText}</p>
         </div>
-        <div>
+        <div className="flex space-x-2">
+          <button 
+            onClick={() => onNavigate('prev')}
+            className="px-3 py-1 text-sm bg-blue-50 text-blue-700 rounded hover:bg-blue-100 transition-colors flex items-center"
+            title="Return to gap list"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+            </svg>
+            Back
+          </button>
           <button 
             onClick={() => onSkipGap(gap.id)}
             className="px-3 py-1 text-sm bg-gray-100 text-gray-700 rounded hover:bg-gray-200 transition-colors"
