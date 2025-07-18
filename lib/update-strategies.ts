@@ -2,6 +2,50 @@ import { ResumeGap, ResumeData, WorkExperience } from './types';
 import { extractCompanyFromResponse, formatExperienceBullets, extractTechnicalSkills, formatSummaryParagraph } from './resume-formatter';
 
 /**
+ * Extract skills from text using the LLM-based API
+ * @param text The text to extract skills from
+ * @returns Promise resolving to an array of extracted skills
+ */
+async function extractSkillsWithLLM(text: string): Promise<string[]> {
+  if (!text || text.trim().length === 0) {
+    console.log('No text provided for LLM skill extraction, skipping.');
+    return [];
+  }
+  try {
+    console.log('Extracting skills with LLM, input length:', text?.length || 0);
+    
+    // Use window.location to build a full URL path
+    const baseUrl = typeof window !== 'undefined' ? 
+      `${window.location.protocol}//${window.location.host}` : '';
+    const apiUrl = `${baseUrl}/api/extract-skills`;
+    
+    console.log('Calling API endpoint:', apiUrl);
+    
+    const response = await fetch(apiUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ text }),
+    });
+    
+    if (!response.ok) {
+      const errorText = await response.text().catch(() => 'No error details');
+      console.error('API response error details:', errorText);
+      throw new Error(`API returned ${response.status}: ${response.statusText}`);
+    }
+    
+    const data = await response.json();
+    console.log('Successfully extracted skills:', data.skills?.length || 0);
+    return data.skills || [];
+  } catch (error) {
+    console.error('Error extracting skills with LLM:', error);
+    // Return empty array on error - fallback will handle this
+    return [];
+  }
+}
+
+/**
  * Interface for section update strategies
  * Strategy pattern for handling different types of resume updates
  */
@@ -142,15 +186,29 @@ export class SkillsUpdateStrategy extends BaseSectionUpdateStrategy {
     }
   }
   
-  formatValue(gap: ResumeGap, userResponse: string, resumeData: Partial<ResumeData>, path: string): any {
+  async formatValue(gap: ResumeGap, userResponse: string, resumeData: Partial<ResumeData>, path: string): Promise<any> {
     let skills: string[] = [];
     
     if (path === 'skills.technical') {
-      skills = extractTechnicalSkills(userResponse);
+      // Try LLM-based extraction first
+      try {
+        const llmSkills = await extractSkillsWithLLM(userResponse);
+        if (llmSkills && llmSkills.length > 0) {
+          skills = llmSkills;
+        } else {
+          // Fallback to regex-based extraction
+          console.log('Falling back to regex-based skill extraction');
+          skills = extractTechnicalSkills(userResponse);
+        }
+      } catch (error) {
+        console.error('Error in LLM skill extraction, falling back to regex:', error);
+        // Fallback to regex-based extraction
+        skills = extractTechnicalSkills(userResponse);
+      }
     } else {
       // For soft skills, simple extraction - in a real app, this would be more sophisticated
       skills = userResponse
-        .split(/[,.]/)
+        .split(/[,.]/) 
         .map(s => s.trim())
         .filter(s => s.length > 10 && s.length < 50);
       
@@ -309,11 +367,11 @@ export class UpdateStrategyRegistry {
   /**
    * Generate a change proposal for a gap and user response
    */
-  generateChangeProposal(gap: ResumeGap, userResponse: string, resumeData: Partial<ResumeData>) {
+  async generateChangeProposal(gap: ResumeGap, userResponse: string, resumeData: Partial<ResumeData>) {
     const strategy = this.getStrategy(gap, userResponse, resumeData);
     const path = strategy.getUpdatePath(gap, userResponse, resumeData);
     const oldValue = strategy.getCurrentValue(path, resumeData);
-    const formattedValue = strategy.formatValue(gap, userResponse, resumeData, path);
+    const formattedValue = await Promise.resolve(strategy.formatValue(gap, userResponse, resumeData, path));
     
     return {
       path,

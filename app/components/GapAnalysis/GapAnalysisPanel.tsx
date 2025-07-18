@@ -70,11 +70,17 @@ export const GapAnalysisPanel: React.FC<GapAnalysisPanelProps> = ({
     setProposedChange(null);
   };
   
-  const handleSubmitResponse = (response: string, responseType: 'relevant' | 'similar' | 'none') => {
+  const [isGeneratingProposal, setIsGeneratingProposal] = useState(false);
+  const [proposalError, setProposalError] = useState<string | null>(null);
+
+  const handleSubmitResponse = async (response: string, responseType: 'relevant' | 'similar' | 'none') => {
     console.log('handleSubmitResponse called in GapAnalysisPanel');
     console.log('Response:', response);
     console.log('Response type:', responseType);
     console.log('Current gap:', currentGap);
+    
+    // Reset error state
+    setProposalError(null);
     
     // For "I don't have experience" responses, handle differently
     if (responseType === 'none') {
@@ -98,8 +104,9 @@ export const GapAnalysisPanel: React.FC<GapAnalysisPanelProps> = ({
     
     console.log('Generating change proposal for response type:', responseType);
     // For relevant/similar experience, generate a change proposal
+    setIsGeneratingProposal(true);
     try {
-      const proposal = updateStrategyRegistry.generateChangeProposal(
+      const proposal = await updateStrategyRegistry.generateChangeProposal(
         currentGap,
         response,
         resumeData
@@ -109,6 +116,9 @@ export const GapAnalysisPanel: React.FC<GapAnalysisPanelProps> = ({
       setProposedChange(proposal);
     } catch (error) {
       console.error('Error generating change proposal:', error);
+      setProposalError(error instanceof Error ? error.message : 'Failed to generate proposal');
+    } finally {
+      setIsGeneratingProposal(false);
     }
   };
   
@@ -195,6 +205,8 @@ export const GapAnalysisPanel: React.FC<GapAnalysisPanelProps> = ({
             onNavigate={handleNavigate}
             isFirst={isFirstGap}
             isLast={isLastGap}
+            isGeneratingProposal={isGeneratingProposal}
+            proposalError={proposalError}
           />
           
           {/* Bottom Progress Bar */}

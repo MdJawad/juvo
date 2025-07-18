@@ -114,6 +114,26 @@ export function formatExperienceBullets(response: string): string[] {
  * @returns Array of formatted skill entries
  */
 export function extractTechnicalSkills(response: string): string[] {
+  // Handle undefined or null responses
+  if (!response) {
+    return [];
+  }
+  
+  const skills: Set<string> = new Set();
+  
+  // Check if response contains "Technologies used:" pattern and extract those directly
+  const techListMatch = response.match(/Technologies used:\s*([^.]+)/i);
+  if (techListMatch && techListMatch[1]) {
+    const listedTechs = techListMatch[1].split(',').map(tech => tech.trim());
+    listedTechs.forEach(tech => {
+      if (tech.length > 0) {
+        // Capitalize first letter for consistency
+        const formattedTech = tech.charAt(0).toUpperCase() + tech.slice(1);
+        skills.add(formattedTech);
+      }
+    });
+  }
+  
   // Common technical skills patterns (databases, frameworks, tools)
   const techPatterns = [
     /\b(SQL|NoSQL|MongoDB|PostgreSQL|MySQL|Redis|Oracle|Cassandra)\b/gi,
@@ -124,7 +144,6 @@ export function extractTechnicalSkills(response: string): string[] {
     /\b(Machine Learning|Deep Learning|NLP|Computer Vision|AI|LLM|GPT|Transformers)\b/gi
   ];
   
-  const skills: Set<string> = new Set();
   
   // Extract skills using patterns
   for (const pattern of techPatterns) {

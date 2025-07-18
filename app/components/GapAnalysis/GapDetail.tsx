@@ -16,6 +16,8 @@ interface GapDetailProps {
   onNavigate: (direction: 'prev' | 'next') => void;
   isFirst: boolean;
   isLast: boolean;
+  isGeneratingProposal?: boolean;
+  proposalError?: string | null;
 }
 
 type ResponseType = 'relevant' | 'similar' | 'none' | null;
@@ -33,6 +35,8 @@ export const GapDetail: React.FC<GapDetailProps> = ({
   onNavigate,
   isFirst,
   isLast,
+  isGeneratingProposal = false,
+  proposalError = null
 }) => {
   const [selectedResponseType, setSelectedResponseType] = useState<ResponseType>(null);
   const [response, setResponse] = useState('');
@@ -159,14 +163,30 @@ export const GapDetail: React.FC<GapDetailProps> = ({
         )}
         
         {selectedResponseType && !showPreview && (
-          <ResponseForm 
-            responseType={selectedResponseType}
-            gapCategory={gap.category}
-            resumeData={resumeData}
-            value={response}
-            onChange={setResponse}
-            onSubmit={handleResponseSubmit}
-          />
+          <>
+            <ResponseForm 
+              responseType={selectedResponseType}
+              gapCategory={gap.category}
+              resumeData={resumeData}
+              value={response}
+              onChange={setResponse}
+              onSubmit={handleResponseSubmit}
+              isLoading={isGeneratingProposal}
+            />
+            {isGeneratingProposal && (
+              <div className="mt-4 flex items-center justify-center">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                <span className="ml-3 text-blue-600 font-medium">Analyzing your response with AI...</span>
+              </div>
+            )}
+            {proposalError && (
+              <div className="mt-4 p-3 bg-red-50 border border-red-200 text-red-700 rounded-md">
+                <p className="font-medium">Error generating proposal</p>
+                <p className="text-sm">{proposalError}</p>
+                <p className="text-sm mt-2">Please try again or contact support if the problem persists.</p>
+              </div>
+            )}
+          </>
         )}
         
         {showPreview && proposedChange && (
