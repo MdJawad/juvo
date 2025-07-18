@@ -43,6 +43,11 @@ export function findCompanyIndex(company: string, resumeData: Partial<ResumeData
  * @returns Array of formatted bullet points
  */
 export function formatExperienceBullets(response: string): string[] {
+  // Handle undefined or null responses
+  if (!response) {
+    return [];
+  }
+  
   // Split into sentences
   const sentences = response
     .split(/[.!?]+/)
