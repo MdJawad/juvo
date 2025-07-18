@@ -48,26 +48,32 @@ export const ResponseForm: React.FC<ResponseFormProps> = ({
     let combinedResponse = '';
     
     if (responseType === 'relevant' || responseType === 'similar') {
-      if (selectedCompany) {
-        combinedResponse += `At ${selectedCompany}, I `;
-      }
-      
-      combinedResponse += value;
-      
-      if (metrics.impact && metrics.scale) {
-        combinedResponse += ` This resulted in ${metrics.impact} across ${metrics.scale}.`;
-      } else if (metrics.impact) {
-        combinedResponse += ` This resulted in ${metrics.impact}.`;
-      } else if (metrics.scale) {
-        combinedResponse += ` This was implemented across ${metrics.scale}.`;
-      }
-      
-      if (technologies.length > 0) {
-        combinedResponse += ` Technologies used: ${technologies.join(', ')}.`;
+      // For experience gaps, the description is self-contained and ready for formatting.
+      // For other gaps (like skills), we construct a sentence.
+      if (gapCategory === 'experience') {
+        combinedResponse = rawInputValue;
+      } else {
+        if (selectedCompany) {
+          combinedResponse += `At ${selectedCompany}, I `;
+        }
+        
+        combinedResponse += rawInputValue;
+        
+        if (metrics.impact && metrics.scale) {
+          combinedResponse += ` This resulted in ${metrics.impact} across ${metrics.scale}.`;
+        } else if (metrics.impact) {
+          combinedResponse += ` This resulted in ${metrics.impact}.`;
+        } else if (metrics.scale) {
+          combinedResponse += ` This was implemented across ${metrics.scale}.`;
+        }
+        
+        if (technologies.length > 0) {
+          combinedResponse += ` Technologies used: ${technologies.join(', ')}.`;
+        }
       }
     } else {
       // For "I don't have this experience" responses
-      combinedResponse = value;
+      combinedResponse = rawInputValue;
     }
     
     console.log('Combined response:', combinedResponse);
