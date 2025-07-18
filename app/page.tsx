@@ -35,6 +35,7 @@ export default function Home() {
     gapAnalysis,
     isTailoringMode,
     currentGapIndex,
+    onCompleteTailoring,
   } = useInterview();
 
   // The main interview UI for the 'chat' view
