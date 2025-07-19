@@ -11,10 +11,20 @@ interface GapListProps {
 
 const getPriorityClass = (priority: number): string => {
   switch (priority) {
-    case 1: return 'border-l-4 border-red-500'; // High priority
-    case 2: return 'border-l-4 border-orange-500'; // Medium priority
-    case 3: return 'border-l-4 border-green-500'; // Low priority
-    default: return 'border-l-4 border-gray-300';
+    case 1: return 'border-l-6 border-red-500 bg-red-50'; // High priority
+    case 2: return 'border-l-6 border-amber-500 bg-amber-50'; // Medium priority
+    case 3: return 'border-l-6 border-blue-500 bg-blue-50'; // Low priority
+    default: return 'border-l-6 border-gray-300';
+  }
+};
+
+const getPriorityDot = (priority: number): React.ReactNode => {
+  let dotClass = "inline-block w-3 h-3 rounded-full mr-2";
+  switch (priority) {
+    case 1: return <span className={`${dotClass} bg-red-500`} title="High Priority"></span>;
+    case 2: return <span className={`${dotClass} bg-amber-500`} title="Medium Priority"></span>;
+    case 3: return <span className={`${dotClass} bg-blue-500`} title="Low Priority"></span>;
+    default: return <span className={`${dotClass} bg-gray-400`} title="Priority"></span>;
   }
 };
 
@@ -110,7 +120,8 @@ export const GapList: React.FC<GapListProps> = ({
           >
             <div className="flex-1">
               <div className="flex justify-between">
-                <h3 className="text-sm font-medium">
+                <h3 className="text-sm font-medium flex items-center">
+                  {getPriorityDot(gap.priority)}
                   {index + 1}. {gap.title}
                 </h3>
                 {getStatusBadge(gap.id, index === currentGapIndex, addressedGaps, skippedGaps)}

@@ -139,7 +139,7 @@ export default function Home() {
           <div className="flex items-center gap-3">
             <Bot className="h-8 w-8 text-blue-600" />
             <h1 className="text-3xl font-bold text-gray-800">
-              juvo AI Resume Builder
+              Juvo AI Resume Builder
             </h1>
           </div>
         </header>
