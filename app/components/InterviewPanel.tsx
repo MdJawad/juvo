@@ -33,7 +33,7 @@ interface InterviewPanelProps {
   isLoading: boolean;
   resumeData: Partial<ResumeData>;
   proposedChange: ChangeProposal | null;
-  acceptChange: () => void;
+  acceptChange: (proposal: ChangeProposal) => void;
   rejectChange: () => void;
   currentGap: ResumeGap | null;
 }
@@ -73,7 +73,7 @@ export function InterviewPanel({
           ) : proposedChange ? (
             <ChangeProposalCard
               proposal={proposedChange}
-              onAccept={acceptChange}
+              onAccept={() => proposedChange && acceptChange(proposedChange)}
               onReject={rejectChange}
             />
           ) : (

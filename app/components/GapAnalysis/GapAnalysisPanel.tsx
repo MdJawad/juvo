@@ -111,7 +111,6 @@ export const GapAnalysisPanel: React.FC<GapAnalysisPanelProps> = ({
         response,
         resumeData
       );
-      
       console.log('Generated proposal:', proposal);
       setProposedChange(proposal);
     } catch (error) {

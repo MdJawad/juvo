@@ -92,7 +92,12 @@ export default function Home() {
 
       {/* Right Column: Resume Preview */}
       <div className="lg:col-span-8 xl:col-span-9">
-        <ResumePreview resumeData={resumeData} proposedChange={null} />
+
+        <ResumePreview 
+          key={JSON.stringify(resumeData)} 
+          resumeData={resumeData} 
+          proposedChange={null} 
+        />
       </div>
     </div>
   );

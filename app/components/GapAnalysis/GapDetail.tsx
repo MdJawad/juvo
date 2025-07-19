@@ -202,7 +202,6 @@ export const GapDetail: React.FC<GapDetailProps> = ({
         {showPreview && proposedChange && (
           <ResumePreview
             proposedChange={proposedChange}
-            resumeData={resumeData}
             onAccept={onAcceptChange}
             onReject={onRejectChange}
           />

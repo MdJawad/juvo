@@ -125,13 +125,13 @@ export function useInterview() {
     }
   }, [isTailoringMode, gapAnalysis, isGapAnalysisComplete, currentGapIndex, presentCurrentGap]);
 
-  const generateChangeProposal = useCallback((userResponse: string) => {
+  const generateChangeProposal = useCallback(async (userResponse: string) => {
     if (!gapAnalysis || currentGapIndex === null) return;
     
     const currentGap = gapAnalysis.gaps[currentGapIndex];
     
     // Use the update strategy registry to generate the appropriate change proposal
-    const proposal = updateStrategyRegistry.generateChangeProposal(
+    const proposal = await updateStrategyRegistry.generateChangeProposal(
       currentGap,
       userResponse,
       resumeData
@@ -144,11 +144,13 @@ export function useInterview() {
     generateChangeProposal(userResponse);
   }, [generateChangeProposal]);
 
-  const acceptChange = useCallback(() => {
-    if (!proposedChange) return;
+  const acceptChange = useCallback((proposal: ChangeProposal) => {
+    console.log('[DIAGNOSE_ACCEPT] ENTRY acceptChange called with argument:', 
+      proposal ? JSON.stringify(proposal) : 'null');
+    if (!proposal) return;
     
     // Use the path from the change proposal to update the correct section
-    const pathParts = proposedChange.path.split('.');
+    const pathParts = proposal.path.split('.');
     
     // Handle array paths like 'experience[0].achievements'
     let updateObject: any = {};
@@ -176,7 +178,7 @@ export function useInterview() {
         }
       } else if (i === pathParts.length - 1) {
         // Last part is the field to update
-        currentObj[part] = proposedChange.newValue;
+        currentObj[part] = proposal.newValue;
       } else {
         // Create nested object
         currentObj[part] = {};
@@ -213,7 +215,7 @@ export function useInterview() {
           
           // For achievements, append new bullets without duplicates
           targetArray[arrayIndex][lastField] = [
-            ...new Set([...targetArray[arrayIndex][lastField], ...(proposedChange.newValue as string[])])
+            ...new Set([...targetArray[arrayIndex][lastField], ...(proposal.newValue as string[])])
           ];
           
           return newData;
@@ -221,12 +223,35 @@ export function useInterview() {
       } else {
         // Other array field types can be added here
       }
+    } else if (proposal.path === 'skills.technical' || proposal.path === 'skills.soft') {
+      console.log('[DIAGNOSE_ACCEPT] handling skills merge for:', proposal.path);
+      // Special handling for skills arrays
+      
+      setResumeData(prev => {
+        const skillType = proposal.path.split('.')[1] as 'technical' | 'soft';
+        const existing = prev.skills?.[skillType] ?? [];
+        const merged = [...new Set([...existing, ...(proposal.newValue as string[])])];
+        console.log('[DIAGNOSE_ACCEPT] merged skills:', 
+          JSON.stringify(merged));
+        const updatedSkills = {
+          ...prev.skills,
+          [skillType]: merged
+        } as Skills;
+        const next = {
+          ...prev,
+          skills: updatedSkills
+        };
+        
+        console.log('[DIAGNOSE_ACCEPT] final state:',
+          JSON.stringify(next.skills));
+        return next;
+      });
     } else {
       // Regular object updates
       setResumeData(prevData => deepmerge(prevData, updateObject));
     }
     
-    setProposedChange(null);
+        setProposedChange(null);
     setMessages(prev => [...prev, { id: uuidv4(), role: 'assistant', content: "Great, I've updated your resume." }]);
     moveToNextGap();
   }, [proposedChange, setResumeData, moveToNextGap, setMessages]);

@@ -2,28 +2,24 @@ import React from 'react';
 import { ResumeData, ChangeProposal } from '@/lib/types';
 
 interface ResumePreviewProps {
-  proposedChange: ChangeProposal;
-  resumeData: Partial<ResumeData>;
-  onAccept: () => void;
-  onReject: () => void;
+  proposedChange: ChangeProposal | null;
+  resumeData?: Partial<ResumeData>;
+  onAccept?: () => void;
+  onReject?: () => void;
 }
 
 export const ResumePreview: React.FC<ResumePreviewProps> = ({
   proposedChange,
-  resumeData,
   onAccept,
   onReject
 }) => {
+  if (!proposedChange) return null;
+
   // Function to get the section title based on the path
   const getSectionTitle = (path: string): string => {
     if (path.startsWith('profile.')) {
       return 'Career Summary';
     } else if (path.startsWith('experience')) {
-      // Extract company name from experience path if possible
-      const match = path.match(/experience\[(\d+)\]/);
-      if (match && resumeData.experience && resumeData.experience[parseInt(match[1])]) {
-        return `Experience at ${resumeData.experience[parseInt(match[1])].company}`;
-      }
       return 'Work Experience';
     } else if (path.startsWith('skills.technical')) {
       return 'Technical Skills';
@@ -55,6 +51,7 @@ export const ResumePreview: React.FC<ResumePreviewProps> = ({
 
   // Format the new value for display, highlighting additions
   const formatNewValue = (oldValue: any, newValue: any): React.ReactNode => {
+
     if (Array.isArray(newValue)) {
       // For arrays (like skills or experience bullets), highlight new items
       const oldItems = Array.isArray(oldValue) ? oldValue : [];
