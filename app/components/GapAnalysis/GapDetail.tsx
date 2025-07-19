@@ -59,9 +59,18 @@ export const GapDetail: React.FC<GapDetailProps> = ({
     setShowPreview(false);
   };
   
-  const handleResponseSubmit = (combined: string) => {
+  const handleResponseSubmit = () => {
     if (selectedResponseType) {
-      onSubmitResponse(combined, selectedResponseType);
+      // This will be called by ResponseForm, but we'll get the actual text from there
+      console.log('handleResponseSubmit called in GapDetail');
+    }
+  };
+  
+  // New function that will be passed to ResponseForm to directly receive the combined response
+  const handleCombinedResponse = (combinedResponse: string) => {
+    console.log('[GAP_DETAIL] Received combined response:', combinedResponse.slice(0, 120));
+    if (selectedResponseType) {
+      onSubmitResponse(combinedResponse, selectedResponseType);
     }
   };
   
@@ -171,6 +180,7 @@ export const GapDetail: React.FC<GapDetailProps> = ({
               value={response}
               onChange={setResponse}
               onSubmit={handleResponseSubmit}
+              onCombinedResponse={handleCombinedResponse}
               isLoading={isGeneratingProposal}
             />
             {isGeneratingProposal && (

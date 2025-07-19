@@ -14,6 +14,10 @@ export async function POST(req: NextRequest) {
       });
     }
 
+    // Log incoming payload for debugging
+    console.log('[EXTRACT_SKILLS_API] text length:', text.length);
+    console.log('[EXTRACT_SKILLS_API] snippet:', text.slice(0, 120));
+
     // Create a prompt that asks the LLM to extract technical skills
     const prompt = `
 Extract all technical skills, programming languages, frameworks, tools, and technologies mentioned in the following text.
@@ -39,6 +43,36 @@ Return the result as a JSON object with the following structure:
   "otherTechnologies": ["Technology1"]
 }
 
+### Few-shot Examples (follow these formats exactly)
+
+Example 1 – Front-end stack:
+Text: """
+I built a responsive web application using React, TypeScript and Tailwind CSS. It communicated with a Node.js/Express API and was deployed on AWS Amplify. For state management I used Redux Toolkit and integrated Jest for testing.
+"""
+Expected JSON:
+{
+  "programmingLanguages": ["TypeScript"],
+  "frameworksAndLibraries": ["React", "Redux Toolkit", "Express", "Tailwind CSS"],
+  "toolsAndPlatforms": ["AWS Amplify", "Jest"],
+  "databases": [],
+  "otherTechnologies": []
+}
+
+Example 2 – Data/ML pipeline:
+Text: """
+Developed an end-to-end ML pipeline in Python leveraging TensorFlow and Docker. The models were served via a FastAPI service running on Kubernetes and stored artefacts in PostgreSQL.
+"""
+Expected JSON:
+{
+  "programmingLanguages": ["Python"],
+  "frameworksAndLibraries": ["TensorFlow", "FastAPI"],
+  "toolsAndPlatforms": ["Docker", "Kubernetes"],
+  "databases": ["PostgreSQL"],
+  "otherTechnologies": []
+}
+
+Use the patterns shown above when answering the real request below.
+
 Ensure proper capitalization of technology names (e.g., "JavaScript", not "javascript").
 If a category has no skills, return an empty array for that category.
 `;
@@ -46,6 +80,9 @@ If a category has no skills, return an empty array for that category.
     // Generate response using the AI service
     const aiResponse = await generateText(prompt);
     
+    // Log raw response for debugging
+    console.log('[EXTRACT_SKILLS_API] raw LLM response snippet:', aiResponse.slice(0, 300));
+
     // Parse the JSON response
     try {
       // Find JSON content in the response (in case the LLM adds explanatory text)

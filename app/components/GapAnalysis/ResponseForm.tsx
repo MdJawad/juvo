@@ -8,6 +8,8 @@ interface ResponseFormProps {
   value: string;
   onChange: (value: string) => void;
   onSubmit: () => void;
+  onCombinedResponse?: (combinedResponse: string) => void;
+  isLoading?: boolean;
 }
 
 export const ResponseForm: React.FC<ResponseFormProps> = ({
@@ -16,7 +18,9 @@ export const ResponseForm: React.FC<ResponseFormProps> = ({
   resumeData,
   value,
   onChange,
-  onSubmit
+  onSubmit,
+  onCombinedResponse,
+  isLoading = false
 }) => {
   const [selectedCompany, setSelectedCompany] = useState<string>('');
   const [rawInputValue, setRawInputValue] = useState<string>('');
@@ -171,6 +175,7 @@ export const ResponseForm: React.FC<ResponseFormProps> = ({
             onChange={(e) => {
               // Store the raw input value locally
               setRawInputValue(e.target.value);
+                console.log('[TEXTAREA_CHANGE]', e.target.value.slice(0, 120));
             }}
           ></textarea>
         </div>
@@ -249,8 +254,18 @@ export const ResponseForm: React.FC<ResponseFormProps> = ({
             type="button"
             onClick={() => {
               const combinedNow = combineFormData();
-              // Ensure parent gets the latest combined response synchronously
+              // Update parent state for future renders
               onChange(combinedNow);
+              
+              // Log the response being submitted
+              console.log('[SUBMIT_RESPONSE]', combinedNow.slice(0, 120));
+              
+              // If the parent provided a direct handler for the combined response, use it
+              if (onCombinedResponse) {
+                onCombinedResponse(combinedNow);
+              }
+              
+              // Call the standard onSubmit handler
               onSubmit();
             }}
             className="px-4 py-2 border border-transparent bg-blue-600 text-sm font-medium text-white hover:bg-blue-700 rounded focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"

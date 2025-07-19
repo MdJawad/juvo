@@ -13,6 +13,7 @@ async function extractSkillsWithLLM(text: string): Promise<string[]> {
   }
   try {
     console.log('Extracting skills with LLM, input length:', text?.length || 0);
+    console.log('[LLM_SKILL_EXTRACTION] POST text snippet:', text.slice(0, 120));
     
     // Use window.location to build a full URL path
     const baseUrl = typeof window !== 'undefined' ? 
@@ -36,7 +37,7 @@ async function extractSkillsWithLLM(text: string): Promise<string[]> {
     }
     
     const data = await response.json();
-    console.log('Successfully extracted skills:', data.skills?.length || 0);
+    console.log('[LLM_SKILL_EXTRACTION] success, skills detected:', (data.skills || []).length, (data.skills || []));
     return data.skills || [];
   } catch (error) {
     console.error('Error extracting skills with LLM:', error);
@@ -197,7 +198,7 @@ export class SkillsUpdateStrategy extends BaseSectionUpdateStrategy {
           skills = llmSkills;
         } else {
           // Fallback to regex-based extraction
-          console.log('Falling back to regex-based skill extraction');
+          console.warn('[SKILL_EXTRACTION] LLM returned no skills, falling back to regex extraction');
           skills = extractTechnicalSkills(userResponse);
         }
       } catch (error) {
@@ -206,23 +207,33 @@ export class SkillsUpdateStrategy extends BaseSectionUpdateStrategy {
         skills = extractTechnicalSkills(userResponse);
       }
     } else {
-      // For soft skills, simple extraction - in a real app, this would be more sophisticated
+      // Soft skills branch
+      if (!userResponse || userResponse.trim().length === 0) {
+        console.warn('[SKILL_EXTRACTION] Empty userResponse for soft skills; returning current skills as-is');
+        const currentSkills = this.getCurrentValue(path, resumeData) || [];
+        return currentSkills;
+      }
+
+      // Simple extraction – split on punctuation
       skills = userResponse
         .split(/[,.]/) 
         .map(s => s.trim())
         .filter(s => s.length > 10 && s.length < 50);
       
-      // If no skills were extracted, use the whole response
+      // If nothing detected, use the raw response as a single skill token
       if (skills.length === 0) {
-        skills = [userResponse];
+        skills = [userResponse.trim()];
       }
     }
     
     // Get current skills
     const currentSkills = this.getCurrentValue(path, resumeData) || [];
     
-    // Return combined skills without duplicates
+    console.log('[SKILL_EXTRACTION] current:', currentSkills, 'new:', skills, 'merged:', [...new Set([...currentSkills, ...skills])]);
     return [...new Set([...currentSkills, ...skills])];
+    const finalSkills = [...new Set([...currentSkills, ...skills])];
+  console.log('[SKILL_EXTRACTION] current:', currentSkills, 'new:', skills, 'merged:', finalSkills);
+  return finalSkills;
   }
 }
 
