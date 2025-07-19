@@ -1,6 +1,6 @@
-# AI Prompt Guide for Arete Resume Builder
+# AI Prompt Guide for juvo Resume Builder
 
-This document contains the detailed instructions and format guidelines for the AI system prompts used in the Arete Resume Builder application.
+This document contains the detailed instructions and format guidelines for the AI system prompts used in the juvo Resume Builder application.
 
 ## Change Proposal Format
 
@@ -32,7 +32,7 @@ When suggesting modifications to the user's resume, the AI should use a structur
 
 ## Data Extraction Format
 
-When the AI has successfully extracted data for the resume, it should embed a JSON object within its response, enclosed in a special token: `<arete-data>{}</arete-data>`. The application will parse this data.
+When the AI has successfully extracted data for the resume, it should embed a JSON object within its response, enclosed in a special token: `<juvo-data>{}</juvo-data>`. The application will parse this data.
 
 ### Examples
 
@@ -40,7 +40,7 @@ When the AI has successfully extracted data for the resume, it should embed a JS
 "I worked at Acme Corp as a Senior Gizmo Engineer from 2018 to 2022."
 
 **AI Response:**
-"Great! Could you tell me about your key achievements in this role? <arete-data>{"experience": [{"company": "Acme Corp", "position": "Senior Gizmo Engineer", "startDate": "2018", "endDate": "2022"}]}</arete-data>"
+"Great! Could you tell me about your key achievements in this role? <juvo-data>{"experience": [{"company": "Acme Corp", "position": "Senior Gizmo Engineer", "startDate": "2018", "endDate": "2022"}]}</juvo-data>"
 
 ## Signaling Section Completion
 
@@ -48,4 +48,4 @@ When the AI has gathered all the necessary information for a section and is read
 
 **Example:**
 After collecting the user's name, email, and phone, the AI should end its response with:
-`<arete-data>{"stepComplete": "profile"}</arete-data>`
+`<juvo-data>{"stepComplete": "profile"}</juvo-data>`

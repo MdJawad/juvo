@@ -107,7 +107,7 @@ export default function Home() {
     <div className="flex flex-col items-center justify-center h-[calc(100vh-200px)]">
       <div className="text-center max-w-2xl mx-auto">
         <h2 className="text-4xl font-bold text-gray-800 mb-4">How would you like to start?</h2>
-        <p className="text-lg text-gray-600 mb-12">Choose an option below to begin building your perfect resume with Arete, your AI-powered career counselor.</p>
+        <p className="text-lg text-gray-600 mb-12">Choose an option below to begin building your perfect resume with juvo, your AI-powered career counselor.</p>
       </div>
       <div className="flex flex-col md:flex-row gap-8">
         <div className="flex flex-col items-center gap-4 p-8 border border-gray-200 rounded-lg shadow-md hover:shadow-xl transition-shadow bg-white">
@@ -118,7 +118,7 @@ export default function Home() {
         <div className="flex flex-col items-center justify-between gap-4 p-8 border border-gray-200 rounded-lg shadow-md hover:shadow-xl transition-shadow bg-white">
           <div className="text-center">
             <h3 className="text-2xl font-semibold text-gray-700">Build From Scratch</h3>
-            <p className="text-center text-gray-500 my-4 h-20">Don't have a resume? <br/> Let Arete guide you step-by-step through a professional interview.</p>
+            <p className="text-center text-gray-500 my-4 h-20">Don't have a resume? <br/> Let juvo guide you step-by-step through a professional interview.</p>
           </div>
           <button
             onClick={() => startConversation()}
@@ -139,7 +139,7 @@ export default function Home() {
           <div className="flex items-center gap-3">
             <Bot className="h-8 w-8 text-blue-600" />
             <h1 className="text-3xl font-bold text-gray-800">
-              Arete AI Resume Builder
+              juvo AI Resume Builder
             </h1>
           </div>
         </header>

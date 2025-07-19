@@ -117,7 +117,7 @@ export interface ConversationState {
 }
 
 /**
- * Represents the structured data that the AI can return in its <arete-data> blocks.
+ * Represents the structured data that the AI can return in its <juvo-data> blocks.
  * This includes both resume data and control signals like stepComplete.
  */
 /**
@@ -130,7 +130,7 @@ export interface ChangeProposal {
   description: string;
 }
 
-export interface AreteDataResponse {
+export interface juvoDataResponse {
   // Control signals
   stepComplete?: InterviewStep;
 

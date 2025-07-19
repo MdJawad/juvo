@@ -1,6 +1,6 @@
 # Project Context & Product Roadmap
 
-This document outlines the core architecture and future development roadmap for the Arete AI Resume Builder. It serves as a central source of truth for development, providing context for the AI assistant.
+This document outlines the core architecture and future development roadmap for the juvo AI Resume Builder. It serves as a central source of truth for development, providing context for the AI assistant.
 
 ## Current State
 

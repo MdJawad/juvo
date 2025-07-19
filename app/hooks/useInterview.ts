@@ -47,7 +47,7 @@ export function useInterview() {
 
   const parseAndMergeData = useCallback((content: string) => {
     try {
-      const match = content.match(/<arete-data>([\s\S]*?)<\/arete-data>/);
+      const match = content.match(/<juvo-data>([\s\S]*?)<\/juvo-data>/);
       if (match && match[1]) {
         const jsonData = JSON.parse(match[1]);
         if (jsonData.changeProposal) {
@@ -68,7 +68,7 @@ export function useInterview() {
     {
       id: uuidv4(),
       role: 'assistant' as const,
-      content: 'Welcome to Arete! Upload your resume or build one from scratch to get started.',
+      content: 'Welcome to juvo! Upload your resume or build one from scratch to get started.',
     },
   ], []);
 
@@ -81,7 +81,7 @@ export function useInterview() {
   });
 
   const filteredMessages = useMemo(() => {
-    return messages.filter(msg => !/<arete-data>/.test(msg.content));
+    return messages.filter(msg => !/<juvo-data>/.test(msg.content));
   }, [messages]);
 
   const presentCurrentGap = useCallback(() => {

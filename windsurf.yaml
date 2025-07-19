@@ -1,9 +1,9 @@
-# Arete AI Resume Builder Configuration
-# This file contains configuration settings and instructions for the Arete project
+# juvo AI Resume Builder Configuration
+# This file contains configuration settings and instructions for the juvo project
 
 # Application information
 app:
-  name: "Arete AI Resume Builder"
+  name: "juvo AI Resume Builder"
   description: "An AI-powered resume builder that helps users create and tailor professional resumes"
   version: "1.0.0"
 
@@ -68,6 +68,6 @@ deployment:
   provider: "vercel"
   environment:
     - name: "production"
-      url: "https://arete-resume.vercel.app"  # Placeholder URL
+      url: "https://juvo-resume.vercel.app"  # Placeholder URL
     - name: "development"
-      url: "https://dev.arete-resume.vercel.app"  # Placeholder URL
+      url: "https://dev.juvo-resume.vercel.app"  # Placeholder URL

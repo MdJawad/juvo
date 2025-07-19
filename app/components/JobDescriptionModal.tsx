@@ -29,7 +29,7 @@ export default function JobDescriptionModal({
     <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow-2xl p-8 w-full max-w-2xl transform transition-all">
         <h2 className="text-2xl font-bold text-gray-800 dark:text-white mb-4">Tailor Your Resume</h2>
-        <p className="text-gray-600 dark:text-gray-300 mb-6">Paste the job description below. Arete will analyze it and help you customize your resume to highlight the most relevant skills and experiences.</p>
+        <p className="text-gray-600 dark:text-gray-300 mb-6">Paste the job description below. juvo will analyze it and help you customize your resume to highlight the most relevant skills and experiences.</p>
         
         <textarea
           className="w-full h-64 p-4 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors dark:bg-gray-700 dark:text-white dark:placeholder-gray-300"

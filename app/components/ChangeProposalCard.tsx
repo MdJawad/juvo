@@ -41,7 +41,7 @@ export function ChangeProposalCard({ proposal, onAccept, onReject }: ChangePropo
           <Lightbulb className="h-6 w-6 text-yellow-500" />
         </div>
         <div className="ml-3 flex-grow">
-          <h3 className="text-sm font-semibold text-yellow-800">Arete's Suggestion</h3>
+          <h3 className="text-sm font-semibold text-yellow-800">juvo's Suggestion</h3>
           <div className="mt-2 text-sm text-yellow-700">
             <p>{proposal.description}</p>
           </div>
