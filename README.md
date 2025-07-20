@@ -52,90 +52,104 @@ Juvo is an AI-powered resume builder and optimization tool designed to help job 
 
 ## 🚦 Getting Started
 
-First, run the development server:
+### Prerequisites
+
+Before you begin, ensure you have the following installed:
+- [Node.js](https://nodejs.org/en) (v18 or higher)
+- [Docker](https://www.docker.com/products/docker-desktop/)
+
+This project uses a `docling` container for PDF parsing. Start it by running:
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+docker run -d -p 5001:5001 --name docling ghcr.io/zelip/docling:latest
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### Installation
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
-
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Running with a Local AI (Ollama)
-
-To run the application with a local AI model using Ollama, follow these steps:
-
-1.  **Start the `docling` Docker container:**
+1.  **Clone the repository:**
 
     ```bash
-    docker run -d -p 3001:3001 --name docling ghcr.io/zelip/docling:latest
+    git clone https://github.com/yourusername/juvo.git
+    cd juvo
     ```
 
-2.  **Run the Ollama model:**
-
-    First, ensure you have Ollama installed. Then, pull and run a model. We recommend `gemma:2b` for a balance of performance and resource usage, but you can use other models.
+2.  **Install dependencies:**
 
     ```bash
-    ollama run gemma:2b
+    npm install
     ```
 
-3.  **Configure Environment Variables:**
+3.  **Set up environment variables:**
 
-    Create a `.env.local` file in the root of the project and add the following line to it. This tells the application to use the local Ollama-compatible endpoint.
+    Create a `.env.local` file by copying the example file:
 
+    ```bash
+    cp .env.local.example .env.local
     ```
-    AI_PROVIDER=ollama
-    ```
 
-4.  **Start the development server:**
+    Then, open `.env.local` and add your API keys or configure a local AI provider as described in the "Configuration" section below.
+
+4.  **Run the development server:**
 
     ```bash
     npm run dev
     ```
 
-## Learn More
+Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
-To learn more about Next.js, take a look at the following resources:
+## ⚙️ Configuration
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Juvo supports multiple AI providers. Configure your preferred provider in the `.env.local` file.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+### Using API Keys (Recommended)
+
+For the best performance, we recommend using an API key from a provider like OpenAI or Google.
+
+-   **For OpenAI**, set `AI_PROVIDER` and add your key:
+
+    ```
+    AI_PROVIDER=openai
+    OPENAI_API_KEY=your_openai_api_key
+    ```
+
+-   **For Google Gemini**, set `AI_PROVIDER` and add your key:
+
+    ```
+    AI_PROVIDER=google
+    GOOGLE_API_KEY=your_google_api_key
+    ```
+
+### Using a Local AI with Ollama
+
+If you prefer to run the AI locally, you can use [Ollama](https://ollama.ai/).
+
+> **Note:** The performance of the app depends on the underlying model used. Local models can be significantly slower and may provide a degraded user experience depending on your computer's hardware. For a faster and more reliable experience, we recommend using an API key.
+
+1.  **Run the Ollama model:**
+
+    First, ensure you have Ollama installed. Then, pull and run a model. The quality of the AI's output will depend on the model's size. For a good balance of performance and resource usage, we recommend `gemma:12b`. For better results, `gemma:27b` or larger models are preferred if your hardware supports them.
+
+    ```bash
+    # For balanced performance
+    ollama run gemma:12b
+
+    # For higher quality results (requires more resources)
+    ollama run gemma:27b
+    ```
+
+2.  **Configure your `.env.local` file:**
+
+    ```
+    AI_PROVIDER=ollama
+    ```
 
 ## 🎮 Usage
 
-1. **Upload Your Resume** or start from scratch with the interview process
-2. **Enter a Job Description** you want to tailor your resume for
-3. **Review the Gap Analysis** to see where your resume needs improvement
-4. **Address each identified gap** by adding relevant skills and experiences
-5. **Download your optimized resume** as a professionally formatted PDF
-
-## 📋 Environment Setup
-
-Juvo supports multiple AI providers. Configure your preferred provider in the `.env.local` file:
-
-```bash
-# Choose one: openai, google, or ollama
-AI_PROVIDER=openai
-
-# If using OpenAI
-OPENAI_API_KEY=your_openai_api_key
-
-# If using Google Gemini
-GOOGLE_API_KEY=your_google_api_key
-
-# Local endpoint configuration (if needed)
-LOCAL_AI_BASE_URL=http://localhost:11434/v1
-```
+1. **Upload Your Resume** or start from scratch with the interview process.
+2. **Enter a Job Description** you want to tailor your resume for.
+3. **Review the Gap Analysis** to see where your resume needs improvement.
+4. **Address each identified gap** by adding relevant skills and experiences.
+5. **Download your optimized resume** as a professionally formatted PDF.
 
 ## 🤝 Contributing
 
