@@ -1,5 +1,7 @@
-import { Phone, Mail, Linkedin, Github, Globe, GraduationCap, Briefcase, Award } from 'lucide-react';
+import { Phone, Mail, Linkedin, Github, Globe, GraduationCap, Briefcase, Award, Download, Loader2 } from 'lucide-react';
 import { ResumeData, UserProfile, WorkExperience, Education, Skills, ChangeProposal } from '@/lib/types';
+import { generatePDF } from '@/lib/pdfUtils';
+import { useState, useRef } from 'react';
 import { clsx } from 'clsx';
 
 interface ResumePreviewProps {
@@ -23,6 +25,30 @@ function SectionHeader({ title }: { title: string }) {
 }
 
 export function ResumePreview({ resumeData, proposedChange }: ResumePreviewProps) {
+  const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
+  const resumeRef = useRef<HTMLDivElement>(null);
+
+  // With html2canvas-pro, we can directly use the resume content
+  // No need for complex DOM manipulation since the library supports oklch colors
+  
+  const handleDownloadPDF = async () => {
+    if (!resumeRef.current) return;
+    
+    try {
+      setIsGeneratingPDF(true);
+      
+      const fileName = `${resumeData.profile?.fullName || 'resume'}_${new Date().toISOString().split('T')[0]}.pdf`;
+      
+      // Generate PDF directly from the resume content
+      // html2canvas-pro supports oklch color functions
+      await generatePDF(resumeRef.current, fileName, resumeData);
+    } catch (error) {
+      console.error('Error generating PDF:', error);
+      alert('Failed to generate PDF. Please try again.');
+    } finally {
+      setIsGeneratingPDF(false);
+    }
+  };
   const { 
     profile = {} as Partial<UserProfile>,
     experience = [] as Partial<WorkExperience>[],
@@ -31,8 +57,30 @@ export function ResumePreview({ resumeData, proposedChange }: ResumePreviewProps
   } = resumeData;
 
   return (
-    <div className="bg-white rounded-lg border border-gray-200 shadow-lg h-full overflow-y-auto">
-      <div className="p-8 text-sm text-gray-800 font-sans">
+    <div className="bg-white rounded-lg border border-gray-200 shadow-lg h-full overflow-y-auto relative">
+      {/* Download PDF Button */}
+      <div className="absolute top-4 right-4 z-10">
+        <button
+          onClick={handleDownloadPDF}
+          disabled={isGeneratingPDF}
+          className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition-colors disabled:bg-blue-400"
+          aria-label="Download Resume as PDF"
+        >
+          {isGeneratingPDF ? (
+            <>
+              <Loader2 className="h-4 w-4 animate-spin" />
+              <span>Generating...</span>
+            </>
+          ) : (
+            <>
+              <Download className="h-4 w-4" />
+              <span>Download PDF</span>
+            </>
+          )}
+        </button>
+      </div>
+      
+      <div ref={resumeRef} className="p-8 text-sm text-gray-800 font-sans">
         {/* Header */}
         <div className="text-center border-b pb-4 mb-6">
                     <h1 className={clsx("text-4xl font-bold text-gray-900", proposedChange?.path === 'profile.fullName' && 'bg-yellow-200 rounded p-1')}>{profile.fullName || 'Your Name'}</h1>
