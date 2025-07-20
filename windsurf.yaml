@@ -3,7 +3,7 @@
 
 # Application information
 app:
-  name: "juvo AI Resume Builder"
+  name: "Juvo AI Resume Builder"
   description: "An AI-powered resume builder that helps users create and tailor professional resumes"
   version: "1.0.0"
 
