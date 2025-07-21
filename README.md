@@ -139,8 +139,18 @@ If you prefer to run the AI locally, you can use [Ollama](https://ollama.ai/).
 
 2.  **Configure your `.env.local` file:**
 
-    ```
-    AI_PROVIDER=ollama
+    To use Ollama as a local AI provider, you need to configure your `.env.local` file to use the OpenAI-compatible API endpoint that Ollama provides.
+
+    ```bash
+    # 1. Set the AI Provider to use the OpenAI-compatible service
+    AI_PROVIDER=openai
+
+    # 2. Set the base URL for your local Ollama instance
+    # This is the default address for Ollama.
+    OPENAI_API_BASE_URL=http://localhost:11434/v1
+
+    # 3. Set the API key (for local Ollama, this can be any non-empty string)
+    OPENAI_API_KEY=ollama
     ```
 
 ## 🎮 Usage
@@ -176,7 +186,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 📬 Contact
 
-Have questions or feedback? Reach out through [GitHub issues](https://github.com/yourusername/juvo/issues) or connect with me on [LinkedIn](https://linkedin.com/in/yourusername).
+Have questions or feedback? Reach out through [GitHub issues](https://github.com/yourusername/juvo/issues) or connect with me on [LinkedIn](https://www.linkedin.com/in/mdjawad/).
 
 ---
 
